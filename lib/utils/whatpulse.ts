@@ -1,6 +1,8 @@
 const WHATPULSE_API = "https://api.whatpulse.org";
 
 interface WhatPulsePulse {
+  Timedate?: string | number;
+  Timestamp?: string | number;
   Date?: string | number;
   Keys?: string | number;
   KeyStrokes?: string | number;
@@ -18,27 +20,29 @@ export interface DailyKeyStats {
 export interface FetchResult {
   stats: DailyKeyStats[];
   rawCount: number;
-  sampleDates: string[]; // デバッグ用：最初の数件の生Date値
+  sampleDates: string[];
 }
 
-/** WhatPulse の Date フィールドを YYYY-MM-DD (UTC) に変換する */
+/** WhatPulse の日付フィールドを YYYY-MM-DD (ローカル) に変換する */
 function parsePulseDate(raw: string | number | undefined): string | null {
   if (raw == null || raw === "") return null;
   const s = String(raw).trim();
 
   // Unixタイムスタンプ（9〜11桁の数字）
   if (/^\d{9,11}$/.test(s)) {
-    const d = new Date(parseInt(s, 10) * 1000);
-    return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0];
+    const ms = parseInt(s, 10) * 1000;
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) return null;
+    // ローカルタイムゾーンで日付を返す
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 
-  // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SSZ"
-  const dateStr = s.replace(" ", "T");
-  const d = new Date(dateStr);
-  if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
-
-  // "YYYY-MM-DD" そのままの場合
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // "YYYY-MM-DD HH:MM:SS" 形式（WhatPulse の Timedate フィールド）
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
 
   return null;
 }
@@ -62,7 +66,7 @@ export async function fetchWhatPulseDaily(
     throw new Error(`WhatPulse parse error: ${raw.slice(0, 300)}`);
   }
 
-  // 配列 or { "1": {...}, "2": {...} } 形式に対応
+  // 配列 or { "Pulse-xxx": {...}, ... } 形式に対応
   let pulses: WhatPulsePulse[];
   if (Array.isArray(parsed)) {
     pulses = parsed;
@@ -72,13 +76,17 @@ export async function fetchWhatPulseDaily(
     throw new Error(`WhatPulse unexpected format: ${raw.slice(0, 200)}`);
   }
 
-  // デバッグ用：最初の3件の生Date値
-  const sampleDates = pulses.slice(0, 3).map((p) => String(p.Date ?? "(none)"));
+  // デバッグ用：最初の3件の Timedate/Timestamp 値
+  const sampleDates = pulses.slice(0, 3).map((p) =>
+    String(p.Timedate ?? p.Timestamp ?? p.Date ?? "(none)")
+  );
 
   const dailyMap = new Map<string, { keys: number; clicks: number }>();
 
   for (const pulse of pulses) {
-    const date = parsePulseDate(pulse.Date);
+    // Timedate → Timestamp → Date の順で日付を取得
+    const raw = pulse.Timedate ?? pulse.Timestamp ?? pulse.Date;
+    const date = parsePulseDate(raw);
     if (!date) continue;
 
     // 日付範囲フィルタ
