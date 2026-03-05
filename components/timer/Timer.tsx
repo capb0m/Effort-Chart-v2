@@ -75,7 +75,8 @@ export function Timer({ onSaved }: TimerProps) {
       setSession(data);
       setElapsed(0);
     } else {
-      toast("タイマーの開始に失敗しました", "error");
+      const body = await res.json().catch(() => ({}));
+      toast(body.error ?? "タイマーの開始に失敗しました", "error");
     }
   };
 

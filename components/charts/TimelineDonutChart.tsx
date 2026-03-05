@@ -9,23 +9,6 @@ interface TimelineDonutChartProps {
   date: string;
 }
 
-// 角丸矩形を描画するヘルパー
-function fillRoundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number
-) {
-  if (w < 2 * r) r = w / 2;
-  if (h < 2 * r) r = h / 2;
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-  ctx.fill();
-}
-
 export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
   const { session } = useAuth();
   const { resolvedTheme } = useTheme();
@@ -51,75 +34,88 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const cssWidth = canvas.clientWidth;
-    const cssHeight = canvas.clientHeight;
+    const cssSize = Math.min(canvas.clientWidth, canvas.clientHeight);
 
-    canvas.width = cssWidth * dpr;
-    canvas.height = cssHeight * dpr;
+    canvas.width = cssSize * dpr;
+    canvas.height = cssSize * dpr;
     ctx.scale(dpr, dpr);
 
     const isDark = resolvedTheme === "dark";
-    const bg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
-    const tickColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)";
-    const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)";
+    const bgRing = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)";
+    const tickColor = isDark ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.18)";
+    const labelColor = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.50)";
 
-    const BAR_Y = 0;
-    const BAR_H = 44;
-    const TICK_Y = BAR_H + 2;
-    const TICK_H = 6;
-    const LABEL_Y = BAR_H + 18;
-    const RADIUS = 6;
+    const cx = cssSize / 2;
+    const cy = cssSize / 2;
+    const outerR = cssSize * 0.44;
+    const innerR = cssSize * 0.30;
+    const tickOuterR = outerR + 5;
+    const tickInnerR = outerR + 1;
+    const labelR = outerR + 14;
 
-    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    ctx.clearRect(0, 0, cssSize, cssSize);
 
-    // 背景バー
-    ctx.fillStyle = bg;
-    fillRoundedRect(ctx, 0, BAR_Y, cssWidth, BAR_H, RADIUS);
-
-    // 活動セグメントをクリッピング内に描画
-    ctx.save();
+    // 背景リング
     ctx.beginPath();
-    ctx.moveTo(RADIUS, BAR_Y);
-    ctx.arcTo(cssWidth, BAR_Y, cssWidth, BAR_Y + BAR_H, RADIUS);
-    ctx.arcTo(cssWidth, BAR_Y + BAR_H, 0, BAR_Y + BAR_H, RADIUS);
-    ctx.arcTo(0, BAR_Y + BAR_H, 0, BAR_Y, RADIUS);
-    ctx.arcTo(0, BAR_Y, cssWidth, BAR_Y, RADIUS);
-    ctx.closePath();
-    ctx.clip();
+    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true);
+    ctx.fillStyle = bgRing;
+    ctx.fill("evenodd");
 
-    // 各セグメントを描画（ローカル時刻で位置計算）
-    const dayStart = new Date(date + "T00:00:00").getTime();
-    const dayMs = 24 * 3600 * 1000;
+    // 時刻をラジアンに変換（0時=上=-π/2、時計回り）
+    const timeToAngle = (isoStr: string): number => {
+      const d = new Date(isoStr);
+      const hours = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+      return (hours / 24) * Math.PI * 2 - Math.PI / 2;
+    };
 
+    // 各セグメントを描画
     for (const seg of data.segments) {
-      const startMs = new Date(seg.startTime).getTime() - dayStart;
-      const endMs = new Date(seg.endTime).getTime() - dayStart;
-      const x1 = Math.max(0, (startMs / dayMs) * cssWidth);
-      const x2 = Math.min(cssWidth, (endMs / dayMs) * cssWidth);
-      if (x2 <= x1) continue;
+      const startAngle = timeToAngle(seg.startTime);
+      const endAngle = timeToAngle(seg.endTime);
+      if (endAngle <= startAngle) continue;
 
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, startAngle, endAngle);
+      ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
+      ctx.closePath();
       ctx.fillStyle = seg.color;
-      ctx.fillRect(x1, BAR_Y, x2 - x1, BAR_H);
+      ctx.fill();
     }
 
-    ctx.restore();
-
-    // 時刻ティックとラベル（0, 4, 8, 12, 16, 20, 24）
-    ctx.font = `10px system-ui, sans-serif`;
+    // 時刻ティックとラベル（0, 3, 6, 9, 12, 15, 18, 21）
+    ctx.font = `${Math.max(9, cssSize * 0.055)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
-    for (let h = 0; h <= 24; h += 4) {
-      const x = (h / 24) * cssWidth;
+    for (let h = 0; h < 24; h += 3) {
+      const angle = (h / 24) * Math.PI * 2 - Math.PI / 2;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
 
       // ティック
-      ctx.fillStyle = tickColor;
-      ctx.fillRect(x - 0.5, TICK_Y, 1, TICK_H);
+      ctx.strokeStyle = tickColor;
+      ctx.lineWidth = h % 6 === 0 ? 2 : 1;
+      ctx.beginPath();
+      ctx.moveTo(cx + cos * tickInnerR, cy + sin * tickInnerR);
+      ctx.lineTo(cx + cos * tickOuterR, cy + sin * tickOuterR);
+      ctx.stroke();
 
       // ラベル
       ctx.fillStyle = labelColor;
-      const label = h === 0 ? "0時" : h === 24 ? "" : `${h}時`;
-      ctx.fillText(label, x, LABEL_Y);
+      const label = h === 0 ? "0" : `${h}`;
+      ctx.fillText(label, cx + cos * labelR, cy + sin * labelR);
     }
+
+    // 中央に合計時間
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.75)";
+    ctx.font = `bold ${Math.max(14, cssSize * 0.10)}px system-ui, sans-serif`;
+    ctx.fillText(`${data.totalHours.toFixed(1)}h`, cx, cy - cssSize * 0.04);
+    ctx.font = `${Math.max(9, cssSize * 0.055)}px system-ui, sans-serif`;
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.40)";
+    ctx.fillText("合計", cx, cy + cssSize * 0.06);
   }, [data, resolvedTheme, date]);
 
   // ユニークカテゴリ（凡例用）
@@ -136,9 +132,9 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
     : [];
 
   return (
-    <div className="space-y-4">
-      {/* タイムラインバー */}
-      <div className="relative" style={{ height: 68 }}>
+    <div className="flex flex-col items-center gap-4">
+      {/* 円形タイムライン */}
+      <div className="relative w-48 h-48">
         <canvas ref={canvasRef} className="w-full h-full" />
         {!data && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -147,12 +143,9 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
         )}
       </div>
 
-      {/* 合計時間 + 凡例 */}
+      {/* 凡例 */}
       {data && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-sm font-mono font-semibold text-gray-700 dark:text-white/70">
-            合計 {data.totalHours.toFixed(1)}h
-          </span>
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
           {uniqueCategories.map((cat) => (
             <div key={cat.categoryId} className="flex items-center gap-1.5">
               <div
