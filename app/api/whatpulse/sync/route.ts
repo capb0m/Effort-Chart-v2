@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
 
   try {
-    const { stats: dailyStats, rawCount } = await fetchWhatPulseDaily(
+    const { stats: dailyStats, rawCount, sampleDates } = await fetchWhatPulseDaily(
       profile.whatpulse_username,
       profile.whatpulse_api_key,
       thirtyDaysAgo,
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // rawCount: APIから取得したパルス総数（0なら username が間違っている可能性）
-    return NextResponse.json({ success: true, synced: dailyStats.length, rawCount });
+    return NextResponse.json({ success: true, synced: dailyStats.length, rawCount, sampleDates, range: { from: thirtyDaysAgo, to: today } });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "WhatPulse API エラー" }, { status: 502 });
   }
