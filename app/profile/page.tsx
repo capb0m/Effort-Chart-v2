@@ -64,7 +64,7 @@ export default function ProfilePage() {
     setSyncing(false);
     const data = await res.json();
     if (res.ok) {
-      toast(`同期完了: ${data.synced}日分のデータを取得しました`, "success");
+      toast(`同期完了: ${data.synced}日分 (API取得パルス数: ${data.rawCount ?? "?"})`, "success");
     } else {
       toast(data.error ?? "同期に失敗しました", "error");
     }
