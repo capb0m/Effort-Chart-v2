@@ -33,21 +33,33 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
 
     const initChart = async () => {
       const { Chart, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend } = await import("chart.js");
-      const { default: annotationPlugin } = await import("chartjs-plugin-annotation");
-      const { default: zoomPlugin } = await import("chartjs-plugin-zoom");
 
-      Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend, annotationPlugin, zoomPlugin);
+      // オプショナルプラグイン（失敗しても描画を続ける）
+      let annotationPlugin: any = null;
+      let zoomPlugin: any = null;
+      try {
+        annotationPlugin = (await import("chartjs-plugin-annotation")).default;
+      } catch { /* optional */ }
+      try {
+        zoomPlugin = (await import("chartjs-plugin-zoom")).default;
+      } catch { /* optional */ }
+
+      const toRegister: any[] = [CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend];
+      if (annotationPlugin) toRegister.push(annotationPlugin);
+      if (zoomPlugin) toRegister.push(zoomPlugin);
+      Chart.register(...toRegister);
 
       chartRef.current?.destroy();
       chartRef.current = null;
+
+      if (!canvasRef.current) return;
 
       const isDark = resolvedTheme === "dark";
       const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
       const textColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)";
 
-      // 全体デイリー目標ライン（破線）
       const annotations: Record<string, object> = {};
-      if (data.overallGoal && mode === "period") {
+      if (annotationPlugin && data.overallGoal && mode === "period") {
         annotations["overallGoalLine"] = {
           type: "line",
           yMin: data.overallGoal,
@@ -65,7 +77,24 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
         };
       }
 
-      chartRef.current = new Chart(canvasRef.current!, {
+      const pluginOptions: Record<string, any> = {
+        legend: {
+          position: "bottom",
+          labels: { color: textColor, boxWidth: 12, padding: 16, font: { size: 11 } },
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => ` ${ctx.dataset.label}: ${(ctx.parsed.y as number).toFixed(1)}h`,
+          },
+        },
+      };
+      if (annotationPlugin) pluginOptions["annotation"] = { annotations };
+      if (zoomPlugin) pluginOptions["zoom"] = {
+        pan: { enabled: true, mode: "x" },
+        zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
+      };
+
+      chartRef.current = new Chart(canvasRef.current, {
         type: "line",
         data: {
           labels: data.labels,
@@ -84,38 +113,21 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
           responsive: true,
           maintainAspectRatio: false,
           interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: { color: textColor, boxWidth: 12, padding: 16, font: { size: 11 } },
-            },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` ${ctx.dataset.label}: ${(ctx.parsed.y as number).toFixed(1)}h`,
-              },
-            },
-            annotation: { annotations },
-            zoom: {
-              pan: { enabled: true, mode: "x" },
-              zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
-            },
-          },
+          plugins: pluginOptions,
           scales: {
             x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
             y: {
               stacked: true,
               grid: { color: gridColor },
-              ticks: { color: textColor, font: { size: 11 }, callback: (v) => `${v}h` },
+              ticks: { color: textColor, font: { size: 11 }, callback: (v: any) => `${v}h` },
             },
           },
         },
       });
     };
 
-    let cancelled = false;
     initChart().catch(console.error);
     return () => {
-      cancelled = true;
       chartRef.current?.destroy();
       chartRef.current = null;
     };

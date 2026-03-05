@@ -131,8 +131,8 @@ export interface TimelineChartData {
     categoryId: string;
     categoryName: string;
     color: string;
-    startAngle: number;
-    endAngle: number;
+    startTime: string;
+    endTime: string;
     hours: number;
   }[];
   totalHours: number;

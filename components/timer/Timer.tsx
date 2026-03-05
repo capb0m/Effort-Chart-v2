@@ -84,39 +84,35 @@ export function Timer({ onSaved }: TimerProps) {
   };
 
   const handleSave = async (categoryId: string) => {
-    // 楽観的更新：先にUIをクリア
-    const prevSession = session;
-    setSession(null);
-    setElapsed(0);
-    setShowModal(false);
-
     const res = await fetch("/api/timer", {
       method: "DELETE",
       headers: authHeaders(),
       body: JSON.stringify({ category_id: categoryId }),
     });
     if (res.ok) {
+      setSession(null);
+      setElapsed(0);
+      setShowModal(false);
       toast("記録を保存しました", "success");
       onSaved?.();
     } else {
-      // 失敗したらロールバック
-      setSession(prevSession);
       const err = await res.json().catch(() => ({}));
       toast(err.error ?? "保存に失敗しました", "error");
+      setShowModal(false);
     }
   };
 
   const handleDiscard = async () => {
-    // 楽観的更新
-    setSession(null);
-    setElapsed(0);
-    setShowModal(false);
-
-    await fetch("/api/timer", {
+    const res = await fetch("/api/timer", {
       method: "DELETE",
       headers: authHeaders(),
       body: JSON.stringify({}),
-    }).catch(console.error);
+    });
+    if (res.ok || (res.status === 404)) {
+      setSession(null);
+      setElapsed(0);
+    }
+    setShowModal(false);
   };
 
   if (loading) {

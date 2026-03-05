@@ -15,24 +15,18 @@ export async function GET(req: NextRequest) {
     .from("records")
     .select("*, categories(*)")
     .eq("user_id", user.id)
-    .gte("start_time", `${date}T00:00:00+00:00`)
-    .lte("end_time", `${date}T23:59:59+00:00`)
+    .gte("start_time", `${date}T00:00:00Z`)
+    .lte("end_time", `${date}T23:59:59Z`)
     .order("start_time");
 
-  // 24時間 = 86400秒
   const segments = (records ?? []).map((r) => {
-    const start = new Date(r.start_time);
-    const end = new Date(r.end_time);
-    const startSec = start.getUTCHours() * 3600 + start.getUTCMinutes() * 60 + start.getUTCSeconds();
-    const endSec = end.getUTCHours() * 3600 + end.getUTCMinutes() * 60 + end.getUTCSeconds();
-    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-
+    const hours = (new Date(r.end_time).getTime() - new Date(r.start_time).getTime()) / (1000 * 60 * 60);
     return {
       categoryId: r.category_id,
       categoryName: (r.categories as { name: string } | null)?.name ?? "不明",
       color: (r.categories as { color: string } | null)?.color ?? "#888",
-      startAngle: (startSec / 86400) * 360 - 90,
-      endAngle: (endSec / 86400) * 360 - 90,
+      startTime: r.start_time,
+      endTime: r.end_time,
       hours,
     };
   });
