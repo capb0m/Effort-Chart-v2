@@ -44,7 +44,7 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
 
     const initChart = async () => {
       try {
-        const { Chart, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend } = await import("chart.js");
+        const { Chart, LineController, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend } = await import("chart.js");
         if (cancelled) return;
 
         // オプショナルプラグイン（失敗しても描画を続ける）
@@ -59,7 +59,7 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
 
         if (cancelled) return;
 
-        const toRegister: any[] = [CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend];
+        const toRegister: any[] = [LineController, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend];
         if (annotationPlugin) toRegister.push(annotationPlugin);
         if (zoomPlugin) toRegister.push(zoomPlugin);
         Chart.register(...toRegister);

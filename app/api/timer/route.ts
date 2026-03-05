@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
   const { user, supabase, error } = await getAuthenticatedUser(req);
   if (error || !user || !supabase) return NextResponse.json({ error }, { status: 401 });
 
-  // 既存のアクティブなタイマーを停止
+  // 既存のアクティブなタイマーを削除（制約違反を防ぐため）
   await supabase
     .from("timer_sessions")
-    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .delete()
     .eq("user_id", user.id)
     .eq("is_active", true);
 
@@ -77,10 +77,12 @@ export async function DELETE(req: NextRequest) {
     : endTime;
 
   // タイマーを停止
-  await supabase
+  const { error: stopError } = await supabase
     .from("timer_sessions")
-    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .update({ is_active: false })
     .eq("id", session.id);
+
+  if (stopError) return NextResponse.json({ error: stopError.message }, { status: 500 });
 
   // カテゴリーが指定された場合は記録として保存
   if (category_id) {
