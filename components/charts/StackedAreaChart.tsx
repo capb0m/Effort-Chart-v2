@@ -9,9 +9,10 @@ interface StackedAreaChartProps {
   mode: "period" | "cumulative";
   start: string;
   end: string;
+  windowSize?: number; // 表示する日数幅（ドラッグでその外も見られる）
 }
 
-export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
+export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedAreaChartProps) {
   const { session } = useAuth();
   const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -104,9 +105,20 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
           },
         };
         if (annotationPlugin) pluginOptions["annotation"] = { annotations };
+        // ドラッグpan: period モードのみ有効。windowSize < 総ラベル数のときのみ意味がある
+        const canPan = zoomPlugin && mode === "period" && windowSize < data.labels.length;
+        const xMin = canPan ? data.labels[data.labels.length - windowSize] : undefined;
+        const xMax = data.labels[data.labels.length - 1];
+
         if (zoomPlugin) pluginOptions["zoom"] = {
-          pan: { enabled: true, mode: "x" },
-          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
+          pan: {
+            enabled: canPan,
+            mode: "x",
+          },
+          zoom: { wheel: { enabled: false }, pinch: { enabled: false }, mode: "x" },
+          limits: canPan ? {
+            x: { min: data.labels[0], max: xMax, minRange: windowSize },
+          } : undefined,
         };
 
         chartRef.current = new Chart(canvasRef.current, {
@@ -121,7 +133,7 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
               borderWidth: 2,
               fill: true,
               tension: 0.4,
-              pointRadius: data.labels.length > 30 ? 0 : 3,
+              pointRadius: windowSize <= 30 ? 3 : 0,
             })),
           },
           options: {
@@ -130,7 +142,12 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
             interaction: { mode: "index", intersect: false },
             plugins: pluginOptions,
             scales: {
-              x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+              x: {
+                min: xMin,
+                max: xMax,
+                grid: { color: gridColor },
+                ticks: { color: textColor, font: { size: 11 } },
+              },
               y: {
                 stacked: true,
                 grid: { color: gridColor },
@@ -150,7 +167,7 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [data, resolvedTheme, mode]);
+  }, [data, resolvedTheme, mode, windowSize]);
 
   return (
     <div className="relative h-72">

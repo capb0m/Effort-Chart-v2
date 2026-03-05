@@ -19,19 +19,33 @@ import { ExternalLink, Flame, Keyboard, Trophy } from "lucide-react";
 import confetti from "canvas-confetti";
 
 // デイリー目標の進捗を取得するフック
+// ローカルタイムゾーンの今日の日付を返す (YYYY-MM-DD)
+function getLocalToday() {
+  return new Date().toLocaleDateString("sv");
+}
+
 function useTodayProgress() {
   const { session } = useAuth();
   const token = session?.access_token;
   const [progress, setProgress] = useState<{ goal: { id: string; target_hours: number; category_id: string | null }; actual: number; category_name: string }[]>([]);
+  const [today, setToday] = useState(getLocalToday);
+
+  // 日付が変わったら today を更新（1分ごとにチェック）
+  useEffect(() => {
+    const id = setInterval(() => setToday(getLocalToday()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!token) return;
     const headers = { Authorization: `Bearer ${token}` };
-    const today = new Date().toISOString().split("T")[0];
+    // ローカル日付の 00:00〜23:59 を UTC に変換して渡す
+    const startUtc = new Date(today + "T00:00:00").toISOString();
+    const endUtc = new Date(today + "T23:59:59").toISOString();
 
     Promise.all([
       fetch("/api/goals", { headers }).then((r) => r.json()),
-      fetch(`/api/records?start=${today}T00:00:00Z&end=${today}T23:59:59Z`, { headers }).then((r) => r.json()),
+      fetch(`/api/records?start=${encodeURIComponent(startUtc)}&end=${encodeURIComponent(endUtc)}`, { headers }).then((r) => r.json()),
       fetch("/api/categories", { headers }).then((r) => r.json()),
     ]).then(([goals, records, categories]) => {
       const dailyGoals = (goals as { id: string; type: string; target_hours: number; category_id: string | null }[]).filter((g) => g.type === "daily");
@@ -53,7 +67,7 @@ function useTodayProgress() {
         category_name: g.category_id ? (catMap.get(g.category_id) ?? "不明") : "全カテゴリー合計",
       })));
     }).catch(console.error);
-  }, [token]);
+  }, [token, today]);
 
   return progress;
 }
@@ -62,7 +76,7 @@ export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { streak } = useStreak();
-  const { whatpulse } = useWhatPulse();
+  const { whatpulse, syncError: whatpulseSyncError } = useWhatPulse();
   const { achievements, mutate: mutateAchievements } = useAchievements();
   const { toast } = useToast();
   const progress = useTodayProgress();
@@ -192,6 +206,9 @@ export default function DashboardPage() {
                   <span className="text-sm text-gray-400 dark:text-white/30">回</span>
                 </div>
                 <p className="text-xs text-gray-400 dark:text-white/30 mt-1">本日（WhatPulse）</p>
+                {whatpulseSyncError && (
+                  <p className="text-xs text-red-400 mt-1 break-all">{whatpulseSyncError}</p>
+                )}
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.06]">
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-400 dark:text-white/30">昨日</span>

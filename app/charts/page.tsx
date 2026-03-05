@@ -9,7 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { StackedAreaChart } from "@/components/charts/StackedAreaChart";
 import { TimelineDonutChart } from "@/components/charts/TimelineDonutChart";
 import { cn } from "@/lib/utils/cn";
-import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
+import { format, subDays } from "date-fns";
 
 type ChartMode = "period" | "cumulative";
 type PeriodPreset = "week" | "month" | "3month";
@@ -25,19 +25,13 @@ export default function ChartsPage() {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
 
+  // 常に90日分ロードし、windowSize でグラフの表示幅を制御する
   const getRange = () => {
     const now = new Date();
-    if (periodPreset === "week") {
-      return {
-        start: format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd"),
-        end: format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd"),
-      };
-    }
-    if (periodPreset === "month") {
-      return { start: format(subDays(now, 29), "yyyy-MM-dd"), end: format(now, "yyyy-MM-dd") };
-    }
     return { start: format(subDays(now, 89), "yyyy-MM-dd"), end: format(now, "yyyy-MM-dd") };
   };
+
+  const windowSize = periodPreset === "week" ? 7 : periodPreset === "month" ? 30 : 90;
 
   if (loading || !user) return null;
 
@@ -75,7 +69,7 @@ export default function ChartsPage() {
             <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4">
               活動グラフ
             </h2>
-            <StackedAreaChart mode={chartMode} start={start} end={end} />
+            <StackedAreaChart mode={chartMode} start={start} end={end} windowSize={chartMode === "cumulative" ? 90 : windowSize} />
           </div>
 
           {/* Timeline Donut */}

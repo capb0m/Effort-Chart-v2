@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,6 +20,7 @@ export interface WhatPulseData {
 export function useWhatPulse() {
   const { session } = useAuth();
   const token = session?.access_token;
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const { data, error, mutate } = useSWR<WhatPulseData>(
     token ? ["/api/whatpulse/daily", token] : null,
@@ -30,19 +31,28 @@ export function useWhatPulse() {
   // needsSync=true のとき自動的に同期してデータを再取得する
   useEffect(() => {
     if (!token || !data?.needsSync) return;
+    setSyncError(null);
 
     fetch("/api/whatpulse/sync", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.ok ? mutate() : null)
-      .catch(() => null);
+      .then(async (r) => {
+        if (r.ok) {
+          mutate();
+        } else {
+          const body = await r.json().catch(() => ({}));
+          setSyncError(body.error ?? "WhatPulse同期に失敗しました");
+        }
+      })
+      .catch((e) => setSyncError(String(e)));
   }, [token, data?.needsSync, mutate]);
 
   return {
     whatpulse: data,
     loading: !data && !error,
     error,
+    syncError,
     mutate,
   };
 }
