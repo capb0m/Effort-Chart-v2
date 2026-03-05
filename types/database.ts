@@ -124,6 +124,7 @@ export interface StackedChartData {
   }[];
   overallGoal?: number | null;
   periodGoals?: { start: string; end: string; hours: number }[];
+  keypressData?: number[]; // WhatPulse キータイプ数（labels と同インデックス）
 }
 
 export interface TimelineChartData {

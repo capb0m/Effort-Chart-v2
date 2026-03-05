@@ -9,7 +9,7 @@ interface StackedAreaChartProps {
   mode: "period" | "cumulative";
   start: string;
   end: string;
-  windowSize?: number; // 表示する日数幅（ドラッグでその外も見られる）
+  windowSize?: number; // 期間モード: 表示幅（90日ロードのうち何日表示するか）/ 累積モード: 未使用
 }
 
 export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedAreaChartProps) {
@@ -48,15 +48,10 @@ export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedA
         const { Chart, LineController, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend } = await import("chart.js");
         if (cancelled) return;
 
-        // オプショナルプラグイン（失敗しても描画を続ける）
         let annotationPlugin: any = null;
         let zoomPlugin: any = null;
-        try {
-          annotationPlugin = (await import("chartjs-plugin-annotation")).default;
-        } catch { /* optional */ }
-        try {
-          zoomPlugin = (await import("chartjs-plugin-zoom")).default;
-        } catch { /* optional */ }
+        try { annotationPlugin = (await import("chartjs-plugin-annotation")).default; } catch { /* optional */ }
+        try { zoomPlugin = (await import("chartjs-plugin-zoom")).default; } catch { /* optional */ }
 
         if (cancelled) return;
 
@@ -67,13 +62,22 @@ export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedA
 
         chartRef.current?.destroy();
         chartRef.current = null;
-
         if (cancelled || !canvasRef.current) return;
 
         const isDark = resolvedTheme === "dark";
         const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
         const textColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)";
 
+        // WhatPulse キータイプ右軸
+        const hasKeypress = !!(data.keypressData?.some((v) => v > 0));
+        const maxKeys = hasKeypress ? Math.max(...(data.keypressData!)) : 0;
+
+        // 期間モード: 90日データのうち windowSize 分だけ初期表示してドラッグ移動可能
+        const canPan = mode === "period" && windowSize < data.labels.length;
+        const xMin = canPan ? data.labels[data.labels.length - windowSize] : undefined;
+        const xMax = data.labels[data.labels.length - 1];
+
+        // 目標破線（期間モードのみ）
         const annotations: Record<string, object> = {};
         if (annotationPlugin && data.overallGoal && mode === "period") {
           annotations["overallGoalLine"] = {
@@ -100,60 +104,93 @@ export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedA
           },
           tooltip: {
             callbacks: {
-              label: (ctx: any) => ` ${ctx.dataset.label}: ${(ctx.parsed.y as number).toFixed(1)}h`,
+              label: (ctx: any) => {
+                if (ctx.dataset.yAxisID === "y1") {
+                  return ` キータイプ数: ${Math.round(ctx.parsed.y).toLocaleString()}`;
+                }
+                return ` ${ctx.dataset.label}: ${(ctx.parsed.y as number).toFixed(1)}h`;
+              },
             },
           },
         };
         if (annotationPlugin) pluginOptions["annotation"] = { annotations };
-        // ドラッグpan: period モードのみ有効。windowSize < 総ラベル数のときのみ意味がある
-        const canPan = zoomPlugin && mode === "period" && windowSize < data.labels.length;
-        const xMin = canPan ? data.labels[data.labels.length - windowSize] : undefined;
-        const xMax = data.labels[data.labels.length - 1];
+        if (zoomPlugin) {
+          pluginOptions["zoom"] = {
+            pan: { enabled: true, mode: "x" },
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" },
+            limits: {
+              x: {
+                min: data.labels[0],
+                max: xMax,
+                minRange: Math.min(7, data.labels.length),
+              },
+            },
+          };
+        }
 
-        if (zoomPlugin) pluginOptions["zoom"] = {
-          pan: {
-            enabled: canPan,
-            mode: "x",
+        // データセット
+        const chartDatasets: any[] = data.datasets.map((ds) => ({
+          label: ds.label,
+          data: ds.data,
+          backgroundColor: ds.backgroundColor,
+          borderColor: ds.borderColor,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: windowSize <= 30 ? 3 : 0,
+          yAxisID: "y",
+        }));
+        if (hasKeypress) {
+          chartDatasets.push({
+            label: "キータイプ数",
+            data: data.keypressData!,
+            borderColor: "#a855f7",
+            backgroundColor: "rgba(168,85,247,0.08)",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0,
+            yAxisID: "y1",
+            order: -1,
+          });
+        }
+
+        // スケール
+        const scales: any = {
+          x: {
+            min: xMin,
+            max: xMax,
+            grid: { color: gridColor },
+            ticks: { color: textColor, font: { size: 11 } },
           },
-          zoom: { wheel: { enabled: false }, pinch: { enabled: false }, mode: "x" },
-          limits: canPan ? {
-            x: { min: data.labels[0], max: xMax, minRange: windowSize },
-          } : undefined,
+          y: {
+            stacked: true,
+            grid: { color: gridColor },
+            ticks: { color: textColor, font: { size: 11 }, callback: (v: any) => `${v}h` },
+          },
         };
+        if (hasKeypress) {
+          scales.y1 = {
+            position: "right",
+            grid: { drawOnChartArea: false },
+            max: Math.ceil(maxKeys * 1.2),
+            ticks: {
+              color: "#a855f7",
+              font: { size: 11 },
+              callback: (v: any) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`,
+            },
+          };
+        }
 
         chartRef.current = new Chart(canvasRef.current, {
           type: "line",
-          data: {
-            labels: data.labels,
-            datasets: data.datasets.map((ds) => ({
-              label: ds.label,
-              data: ds.data,
-              backgroundColor: ds.backgroundColor,
-              borderColor: ds.borderColor,
-              borderWidth: 2,
-              fill: true,
-              tension: 0.4,
-              pointRadius: windowSize <= 30 ? 3 : 0,
-            })),
-          },
+          data: { labels: data.labels, datasets: chartDatasets },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "index", intersect: false },
             plugins: pluginOptions,
-            scales: {
-              x: {
-                min: xMin,
-                max: xMax,
-                grid: { color: gridColor },
-                ticks: { color: textColor, font: { size: 11 } },
-              },
-              y: {
-                stacked: true,
-                grid: { color: gridColor },
-                ticks: { color: textColor, font: { size: 11 }, callback: (v: any) => `${v}h` },
-              },
-            },
+            scales,
           },
         });
       } catch (e: any) {
@@ -179,7 +216,7 @@ export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedA
       )}
       {chartError && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-xs text-red-400 dark:text-red-400 px-4 text-center">{chartError}</p>
+          <p className="text-xs text-red-400 px-4 text-center">{chartError}</p>
         </div>
       )}
     </div>

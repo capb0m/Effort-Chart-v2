@@ -82,6 +82,22 @@ export async function GET(req: NextRequest) {
     };
   }) ?? [];
 
+  // WhatPulse キータイプ数
+  const { data: whatpulseStats } = await supabase
+    .from("whatpulse_daily_stats")
+    .select("date, total_keys")
+    .eq("user_id", user.id)
+    .gte("date", start)
+    .lte("date", end);
+
+  const keypressMap = new Map<string, number>(
+    (whatpulseStats ?? []).map((s: any) => [s.date, s.total_keys])
+  );
+  const keypressRaw = days.map((d) => keypressMap.get(format(d, "yyyy-MM-dd")) ?? 0);
+  const keypressData = mode === "cumulative"
+    ? keypressRaw.reduce<number[]>((acc, v, i) => { acc.push((acc[i - 1] ?? 0) + v); return acc; }, [])
+    : keypressRaw;
+
   return NextResponse.json({
     labels,
     datasets,
@@ -91,5 +107,6 @@ export async function GET(req: NextRequest) {
       end: g.deadline,
       hours: g.target_hours,
     })) ?? [],
+    keypressData,
   });
 }
