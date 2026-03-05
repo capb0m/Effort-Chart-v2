@@ -1,7 +1,7 @@
 const WHATPULSE_API = "https://api.whatpulse.org";
 
 interface WhatPulsePulse {
-  Date?: string;
+  Date?: string | number;
   Keys?: string | number;
   KeyStrokes?: string | number;
   Clicks?: string | number;
@@ -17,7 +17,30 @@ export interface DailyKeyStats {
 
 export interface FetchResult {
   stats: DailyKeyStats[];
-  rawCount: number; // デバッグ用：APIが返したパルス総数
+  rawCount: number;
+  sampleDates: string[]; // デバッグ用：最初の数件の生Date値
+}
+
+/** WhatPulse の Date フィールドを YYYY-MM-DD (UTC) に変換する */
+function parsePulseDate(raw: string | number | undefined): string | null {
+  if (raw == null || raw === "") return null;
+  const s = String(raw).trim();
+
+  // Unixタイムスタンプ（9〜11桁の数字）
+  if (/^\d{9,11}$/.test(s)) {
+    const d = new Date(parseInt(s, 10) * 1000);
+    return isNaN(d.getTime()) ? null : d.toISOString().split("T")[0];
+  }
+
+  // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SSZ"
+  const dateStr = s.replace(" ", "T");
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
+
+  // "YYYY-MM-DD" そのままの場合
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  return null;
 }
 
 export async function fetchWhatPulseDaily(
@@ -26,7 +49,6 @@ export async function fetchWhatPulseDaily(
   startDate: string,
   endDate: string
 ): Promise<FetchResult> {
-  // start/end パラメータは無視される場合があるため使用しない
   const url = `${WHATPULSE_API}/pulses.php?user=${encodeURIComponent(username)}&format=json`;
 
   const res = await fetch(url);
@@ -40,24 +62,24 @@ export async function fetchWhatPulseDaily(
     throw new Error(`WhatPulse parse error: ${raw.slice(0, 300)}`);
   }
 
-  // 配列 or オブジェクト（キー付き）に対応
+  // 配列 or { "1": {...}, "2": {...} } 形式に対応
   let pulses: WhatPulsePulse[];
   if (Array.isArray(parsed)) {
     pulses = parsed;
   } else if (parsed && typeof parsed === "object") {
-    // { "1": {...}, "2": {...} } 形式
     pulses = Object.values(parsed as Record<string, WhatPulsePulse>);
   } else {
     throw new Error(`WhatPulse unexpected format: ${raw.slice(0, 200)}`);
   }
 
+  // デバッグ用：最初の3件の生Date値
+  const sampleDates = pulses.slice(0, 3).map((p) => String(p.Date ?? "(none)"));
+
   const dailyMap = new Map<string, { keys: number; clicks: number }>();
 
   for (const pulse of pulses) {
-    const rawDate = String(pulse.Date ?? "");
-    // "2026-03-05 20:15:32" or "2026-03-05T20:15:32Z" → "2026-03-05"
-    const date = rawDate.split(/[T ]/)[0];
-    if (!date || date.length < 10) continue;
+    const date = parsePulseDate(pulse.Date);
+    if (!date) continue;
 
     // 日付範囲フィルタ
     if (date < startDate || date > endDate) continue;
@@ -65,7 +87,10 @@ export async function fetchWhatPulseDaily(
     const existing = dailyMap.get(date) ?? { keys: 0, clicks: 0 };
     const keys = parseInt(String(pulse.Keys ?? pulse.KeyStrokes ?? "0"), 10);
     const clicks = parseInt(String(pulse.Clicks ?? pulse.MouseClicks ?? "0"), 10);
-    dailyMap.set(date, { keys: existing.keys + (isNaN(keys) ? 0 : keys), clicks: existing.clicks + (isNaN(clicks) ? 0 : clicks) });
+    dailyMap.set(date, {
+      keys: existing.keys + (isNaN(keys) ? 0 : keys),
+      clicks: existing.clicks + (isNaN(clicks) ? 0 : clicks),
+    });
   }
 
   return {
@@ -75,5 +100,6 @@ export async function fetchWhatPulseDaily(
       total_clicks: s.clicks,
     })),
     rawCount: pulses.length,
+    sampleDates,
   };
 }
