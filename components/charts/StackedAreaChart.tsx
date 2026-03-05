@@ -13,7 +13,7 @@ interface StackedAreaChartProps {
 
 export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
   const { session } = useAuth();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<import("chart.js").Chart | null>(null);
   const [data, setData] = useState<StackedChartData | null>(null);
@@ -39,8 +39,9 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
       Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend, annotationPlugin, zoomPlugin);
 
       chartRef.current?.destroy();
+      chartRef.current = null;
 
-      const isDark = theme === "dark";
+      const isDark = resolvedTheme === "dark";
       const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
       const textColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)";
 
@@ -111,9 +112,14 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
       });
     };
 
-    initChart();
-    return () => { chartRef.current?.destroy(); };
-  }, [data, theme, mode]);
+    let cancelled = false;
+    initChart().catch(console.error);
+    return () => {
+      cancelled = true;
+      chartRef.current?.destroy();
+      chartRef.current = null;
+    };
+  }, [data, resolvedTheme, mode]);
 
   return (
     <div className="relative h-72">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Play, Square } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/Toast";
@@ -21,6 +21,7 @@ export function Timer({ onSaved }: TimerProps) {
   const [loading, setLoading] = useState(true);
   const { session: authSession } = useAuth();
   const { toast } = useToast();
+  const hasFetched = useRef(false);
 
   const token = authSession?.access_token;
 
@@ -29,9 +30,10 @@ export function Timer({ onSaved }: TimerProps) {
     Authorization: `Bearer ${token}`,
   }), [token]);
 
-  // セッション読み込み
+  // セッション読み込み（初回のみ）
   useEffect(() => {
-    if (!token) return;
+    if (!token || hasFetched.current) return;
+    hasFetched.current = true;
     fetch("/api/timer", { headers: authHeaders() })
       .then((r) => r.json())
       .then((data) => {
@@ -82,32 +84,39 @@ export function Timer({ onSaved }: TimerProps) {
   };
 
   const handleSave = async (categoryId: string) => {
+    // 楽観的更新：先にUIをクリア
+    const prevSession = session;
+    setSession(null);
+    setElapsed(0);
+    setShowModal(false);
+
     const res = await fetch("/api/timer", {
       method: "DELETE",
       headers: authHeaders(),
       body: JSON.stringify({ category_id: categoryId }),
     });
     if (res.ok) {
-      setSession(null);
-      setElapsed(0);
-      setShowModal(false);
       toast("記録を保存しました", "success");
       onSaved?.();
     } else {
-      const err = await res.json();
+      // 失敗したらロールバック
+      setSession(prevSession);
+      const err = await res.json().catch(() => ({}));
       toast(err.error ?? "保存に失敗しました", "error");
     }
   };
 
   const handleDiscard = async () => {
+    // 楽観的更新
+    setSession(null);
+    setElapsed(0);
+    setShowModal(false);
+
     await fetch("/api/timer", {
       method: "DELETE",
       headers: authHeaders(),
       body: JSON.stringify({}),
-    });
-    setSession(null);
-    setElapsed(0);
-    setShowModal(false);
+    }).catch(console.error);
   };
 
   if (loading) {
@@ -138,8 +147,9 @@ export function Timer({ onSaved }: TimerProps) {
           {isActive ? (
             <button
               onClick={handleStop}
+              disabled={showModal}
               className={cn(
-                "w-14 h-14 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center hover:bg-red-500/30 transition",
+                "w-14 h-14 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center hover:bg-red-500/30 transition disabled:opacity-40 disabled:cursor-not-allowed",
                 "timer-active"
               )}
             >

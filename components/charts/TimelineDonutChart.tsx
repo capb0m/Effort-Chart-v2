@@ -11,7 +11,7 @@ interface TimelineDonutChartProps {
 
 export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
   const { session } = useAuth();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<import("chart.js").Chart | null>(null);
   const [data, setData] = useState<TimelineChartData | null>(null);
@@ -34,8 +34,9 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
       Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
 
       chartRef.current?.destroy();
+      chartRef.current = null;
 
-      const isDark = theme === "dark";
+      const isDark = resolvedTheme === "dark";
       const textColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)";
 
       if (data.segments.length === 0) {
@@ -85,9 +86,12 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
       });
     };
 
-    initChart();
-    return () => { chartRef.current?.destroy(); };
-  }, [data, theme]);
+    initChart().catch(console.error);
+    return () => {
+      chartRef.current?.destroy();
+      chartRef.current = null;
+    };
+  }, [data, resolvedTheme]);
 
   return (
     <div className="relative h-64">
