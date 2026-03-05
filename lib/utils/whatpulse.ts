@@ -62,9 +62,16 @@ export async function fetchWhatPulseDaily(
   const url = `${WHATPULSE_OLD_API}/pulses.php?user=${username}&format=json&start=${startTs}&end=${endTs}`;
 
   const res = await fetch(url, { next: { revalidate: 0 } });
-  if (!res.ok) throw new Error("WhatPulse API error");
+  if (!res.ok) throw new Error(`WhatPulse old API error: ${res.status}`);
 
-  const data: WhatPulseOldPulse[] = await res.json();
+  const raw = await res.text();
+  let data: WhatPulseOldPulse[];
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`WhatPulse parse error: ${raw.slice(0, 200)}`);
+  }
+  if (!Array.isArray(data)) throw new Error(`WhatPulse unexpected format: ${raw.slice(0, 200)}`);
   const dailyMap = new Map<string, { keys: number; clicks: number }>();
 
   for (const pulse of data) {

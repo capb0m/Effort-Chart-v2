@@ -39,13 +39,15 @@ export async function POST(req: NextRequest) {
         fetched_at: new Date().toISOString(),
       }));
 
-      await supabase
+      const { error: upsertError } = await supabase
         .from("whatpulse_daily_stats")
         .upsert(upsertData, { onConflict: "user_id,date" });
+
+      if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, synced: dailyStats.length });
-  } catch (e) {
-    return NextResponse.json({ error: "WhatPulse API エラー" }, { status: 502 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? "WhatPulse API エラー" }, { status: 502 });
   }
 }

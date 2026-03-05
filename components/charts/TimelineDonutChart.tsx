@@ -9,11 +9,30 @@ interface TimelineDonutChartProps {
   date: string;
 }
 
+interface TooltipState {
+  visible: boolean;
+  x: number;
+  y: number;
+  categoryName: string;
+  color: string;
+  startLabel: string;
+  endLabel: string;
+}
+
+function formatTime(isoStr: string): string {
+  const d = new Date(isoStr);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
   const { session } = useAuth();
   const { resolvedTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<TimelineChartData | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState>({
+    visible: false, x: 0, y: 0, categoryName: "", color: "", startLabel: "", endLabel: "",
+  });
 
   useEffect(() => {
     if (!session?.access_token) return;
@@ -62,13 +81,6 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
     ctx.fillStyle = bgRing;
     ctx.fill("evenodd");
 
-    // 時刻をラジアンに変換（0時=上=-π/2、時計回り）
-    const timeToAngle = (isoStr: string): number => {
-      const d = new Date(isoStr);
-      const hours = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
-      return (hours / 24) * Math.PI * 2 - Math.PI / 2;
-    };
-
     // 各セグメントを描画
     for (const seg of data.segments) {
       const startAngle = timeToAngle(seg.startTime);
@@ -93,7 +105,6 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
 
-      // ティック
       ctx.strokeStyle = tickColor;
       ctx.lineWidth = h % 6 === 0 ? 2 : 1;
       ctx.beginPath();
@@ -101,10 +112,8 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
       ctx.lineTo(cx + cos * tickOuterR, cy + sin * tickOuterR);
       ctx.stroke();
 
-      // ラベル
       ctx.fillStyle = labelColor;
-      const label = h === 0 ? "0" : `${h}`;
-      ctx.fillText(label, cx + cos * labelR, cy + sin * labelR);
+      ctx.fillText(`${h}`, cx + cos * labelR, cy + sin * labelR);
     }
 
     // 中央に合計時間
@@ -117,6 +126,62 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
     ctx.fillStyle = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.40)";
     ctx.fillText("合計", cx, cy + cssSize * 0.06);
   }, [data, resolvedTheme, date]);
+
+  // マウスホバー処理
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!data || !canvasRef.current || !containerRef.current) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const cssSize = Math.min(canvas.clientWidth, canvas.clientHeight);
+    const cx = cssSize / 2;
+    const cy = cssSize / 2;
+    const outerR = cssSize * 0.44;
+    const innerR = cssSize * 0.30;
+
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const dx = mx - cx;
+    const dy = my - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < innerR || dist > outerR) {
+      setTooltip((t) => ({ ...t, visible: false }));
+      return;
+    }
+
+    // ドーナツ内の角度から時刻を計算
+    const angle = Math.atan2(dy, dx); // -π to π
+    const normalizedAngle = ((angle + Math.PI / 2) + Math.PI * 2) % (Math.PI * 2);
+    const hour = (normalizedAngle / (Math.PI * 2)) * 24;
+
+    // どのセグメントに属するか判定
+    const hit = data.segments.find((seg) => {
+      const d = new Date(seg.startTime);
+      const startH = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+      const d2 = new Date(seg.endTime);
+      const endH = d2.getHours() + d2.getMinutes() / 60 + d2.getSeconds() / 3600;
+      return hour >= startH && hour <= endH;
+    });
+
+    if (!hit) {
+      setTooltip((t) => ({ ...t, visible: false }));
+      return;
+    }
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      x: e.clientX - containerRect.left,
+      y: e.clientY - containerRect.top,
+      categoryName: hit.categoryName,
+      color: hit.color,
+      startLabel: formatTime(hit.startTime),
+      endLabel: formatTime(hit.endTime),
+    });
+  };
+
+  const handleMouseLeave = () => setTooltip((t) => ({ ...t, visible: false }));
 
   // ユニークカテゴリ（凡例用）
   const uniqueCategories = data
@@ -134,11 +199,32 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
   return (
     <div className="flex flex-col items-center gap-4">
       {/* 円形タイムライン */}
-      <div className="relative w-48 h-48">
-        <canvas ref={canvasRef} className="w-full h-full" />
+      <div ref={containerRef} className="relative w-48 h-48">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        />
         {!data && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          </div>
+        )}
+
+        {/* ツールチップ */}
+        {tooltip.visible && (
+          <div
+            className="absolute z-10 pointer-events-none px-2.5 py-1.5 rounded-lg text-xs shadow-lg bg-white dark:bg-[#1e1e2e] border border-gray-200 dark:border-white/[0.08] whitespace-nowrap"
+            style={{ left: tooltip.x + 12, top: tooltip.y - 36 }}
+          >
+            <div className="flex items-center gap-1.5 font-medium">
+              <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: tooltip.color }} />
+              {tooltip.categoryName}
+            </div>
+            <div className="text-gray-400 dark:text-white/40 mt-0.5">
+              {tooltip.startLabel} 〜 {tooltip.endLabel}
+            </div>
           </div>
         )}
       </div>
@@ -162,4 +248,10 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
       )}
     </div>
   );
+}
+
+function timeToAngle(isoStr: string): number {
+  const d = new Date(isoStr);
+  const hours = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+  return (hours / 24) * Math.PI * 2 - Math.PI / 2;
 }

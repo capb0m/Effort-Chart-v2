@@ -76,10 +76,10 @@ export async function DELETE(req: NextRequest) {
     ? new Date(startTime.getTime() + MAX_TIMER_HOURS * 3600000)
     : endTime;
 
-  // タイマーを停止
+  // タイマーセッションを削除（is_active更新ではなく物理削除）
   const { error: stopError } = await supabase
     .from("timer_sessions")
-    .update({ is_active: false })
+    .delete()
     .eq("id", session.id);
 
   if (stopError) return NextResponse.json({ error: stopError.message }, { status: 500 });

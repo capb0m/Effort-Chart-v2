@@ -109,7 +109,8 @@ export function Timer({ onSaved }: TimerProps) {
       headers: authHeaders(),
       body: JSON.stringify({}),
     });
-    if (res.ok || (res.status === 404)) {
+    // 401以外は（DBエラーでも）クライアント状態をクリアする
+    if (res.status !== 401) {
       setSession(null);
       setElapsed(0);
     }

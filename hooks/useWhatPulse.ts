@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import useSWR from "swr";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,6 +14,7 @@ export interface WhatPulseData {
   today: number;
   yesterday: number;
   hasConfig: boolean;
+  needsSync?: boolean;
 }
 
 export function useWhatPulse() {
@@ -22,8 +24,20 @@ export function useWhatPulse() {
   const { data, error, mutate } = useSWR<WhatPulseData>(
     token ? ["/api/whatpulse/daily", token] : null,
     fetcher,
-    { dedupingInterval: 3600000 }
+    { dedupingInterval: 60000 }
   );
+
+  // needsSync=true のとき自動的に同期してデータを再取得する
+  useEffect(() => {
+    if (!token || !data?.needsSync) return;
+
+    fetch("/api/whatpulse/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.ok ? mutate() : null)
+      .catch(() => null);
+  }, [token, data?.needsSync, mutate]);
 
   return {
     whatpulse: data,
