@@ -22,7 +22,7 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
       headers: { Authorization: `Bearer ${session.access_token}` },
     })
       .then((r) => r.json())
-      .then(setData)
+      .then((json) => { if (json && json.segments) setData(json); })
       .catch(console.error);
   }, [session?.access_token, date]);
 
@@ -91,20 +91,18 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
 
   return (
     <div className="relative h-64">
+      <canvas ref={canvasRef} className="w-full h-full" />
       {!data ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
       ) : (
-        <>
-          <canvas ref={canvasRef} />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center" style={{ transform: "translateX(-30%)" }}>
-              <div className="text-2xl font-bold font-mono">{data.totalHours.toFixed(1)}h</div>
-              <div className="text-xs text-gray-400 dark:text-white/30">合計</div>
-            </div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center" style={{ transform: "translateX(-30%)" }}>
+            <div className="text-2xl font-bold font-mono">{data.totalHours.toFixed(1)}h</div>
+            <div className="text-xs text-gray-400 dark:text-white/30">合計</div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

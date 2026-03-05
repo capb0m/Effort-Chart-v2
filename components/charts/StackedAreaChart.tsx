@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "next-themes";
 import { StackedChartData } from "@/types/database";
-import { useWhatPulse } from "@/hooks/useWhatPulse";
 
 interface StackedAreaChartProps {
   mode: "period" | "cumulative";
@@ -18,7 +17,6 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<import("chart.js").Chart | null>(null);
   const [data, setData] = useState<StackedChartData | null>(null);
-  const { whatpulse } = useWhatPulse();
 
   useEffect(() => {
     if (!session?.access_token) return;
@@ -26,7 +24,7 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
       headers: { Authorization: `Bearer ${session.access_token}` },
     })
       .then((r) => r.json())
-      .then(setData)
+      .then((json) => { if (json && json.labels) setData(json); })
       .catch(console.error);
   }, [session?.access_token, mode, start, end]);
 
@@ -119,12 +117,11 @@ export function StackedAreaChart({ mode, start, end }: StackedAreaChartProps) {
 
   return (
     <div className="relative h-72">
-      {!data ? (
+      <canvas ref={canvasRef} className="w-full h-full" />
+      {!data && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
         </div>
-      ) : (
-        <canvas ref={canvasRef} />
       )}
     </div>
   );
