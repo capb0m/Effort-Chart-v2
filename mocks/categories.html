@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Effort Chart - カテゴリー</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['DM Sans','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+<style>body{font-family:'DM Sans',sans-serif}.scrollbar-hide::-webkit-scrollbar{display:none}.scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}</style>
+<script>
+function initTheme(){const t=localStorage.getItem('theme')||'dark';document.documentElement.classList.toggle('dark',t==='dark')}
+function toggleTheme(){document.documentElement.classList.toggle('dark');localStorage.setItem('theme',document.documentElement.classList.contains('dark')?'dark':'light')}
+initTheme();
+</script>
+</head>
+<body class="bg-gray-50 dark:bg-[#0a0a14] text-gray-900 dark:text-white min-h-screen transition-colors duration-200">
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside class="hidden lg:flex flex-col w-64 bg-white dark:bg-[#11111b] border-r border-gray-200 dark:border-white/[0.06] p-4 transition-colors">
+    <div class="flex items-center gap-2.5 px-3 py-2 mb-8"><div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-orange-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><span class="font-bold text-lg tracking-tight">Effort Chart</span></div>
+    <nav class="flex-1 space-y-1">
+      <a href="dashboard.html" class="block px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">ダッシュボード</a>
+      <a href="records.html" class="block px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">記録</a>
+      <a href="goals.html" class="block px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">目標</a>
+      <a href="charts.html" class="block px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">グラフ</a>
+      <a href="achievements.html" class="block px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">実績</a>
+      <a href="categories.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-violet-50 dark:bg-white/[0.06] text-violet-700 dark:text-white font-medium text-sm">
+        <svg class="w-5 h-5 text-violet-500 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg>
+        カテゴリー</a>
+    </nav>
+    <div class="border-t border-gray-200 dark:border-white/[0.06] pt-3 mt-2"><button onclick="toggleTheme()" class="block w-full px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.03] text-sm text-gray-500 dark:text-white/50 text-left">🌓 テーマ切替</button><a href="profile.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.03]"><div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400 text-sm font-bold">U</div><div class="text-sm">ユーザー名</div></a></div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
+    <header class="sticky top-0 z-30 bg-gray-50/80 dark:bg-[#0a0a14]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] px-4 lg:px-8 py-4 transition-colors">
+      <div class="flex items-center justify-between">
+        <div><h1 class="text-xl font-bold">カテゴリー</h1><p class="text-sm text-gray-500 dark:text-white/40 mt-0.5">活動カテゴリーの管理</p></div>
+        <button onclick="document.getElementById('cm').classList.remove('hidden')" class="flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition active:scale-95">+ 追加</button>
+      </div>
+    </header>
+
+    <div class="px-4 lg:px-8 py-6 max-w-3xl space-y-6">
+      <!-- Active Categories -->
+      <div>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4">アクティブ <span class="text-gray-300 dark:text-white/20">3</span></h2>
+        <div class="space-y-2">
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 group hover:border-violet-300 dark:hover:border-white/[0.1] transition-colors">
+            <div class="w-5 h-5 rounded-full bg-blue-400 flex-shrink-0"></div>
+            <div class="flex-1"><span class="text-sm font-medium">プログラミング</span><div class="text-xs text-gray-400 dark:text-white/30 mt-0.5">325件の記録 ・ 842.5h</div></div>
+            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 text-sm">✏️</button><button class="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-500/10 text-gray-400 hover:text-orange-500 text-sm">📦</button></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 group hover:border-violet-300 dark:hover:border-white/[0.1] transition-colors">
+            <div class="w-5 h-5 rounded-full bg-emerald-400 flex-shrink-0"></div>
+            <div class="flex-1"><span class="text-sm font-medium">読書</span><div class="text-xs text-gray-400 dark:text-white/30 mt-0.5">189件の記録 ・ 234.2h</div></div>
+            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 text-sm">✏️</button><button class="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-500/10 text-gray-400 hover:text-orange-500 text-sm">📦</button></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 group hover:border-violet-300 dark:hover:border-white/[0.1] transition-colors">
+            <div class="w-5 h-5 rounded-full bg-amber-400 flex-shrink-0"></div>
+            <div class="flex-1"><span class="text-sm font-medium">英語学習</span><div class="text-xs text-gray-400 dark:text-white/30 mt-0.5">156件の記録 ・ 178.8h</div></div>
+            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition"><button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 text-sm">✏️</button><button class="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-500/10 text-gray-400 hover:text-orange-500 text-sm">📦</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archived -->
+      <div>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4">アーカイブ済み <span class="text-gray-300 dark:text-white/20">2</span></h2>
+        <div class="space-y-2">
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 flex items-center gap-4 opacity-60 transition-colors">
+            <div class="w-5 h-5 rounded-full bg-rose-400 flex-shrink-0"></div>
+            <div class="flex-1"><span class="text-sm font-medium">デザイン</span><div class="text-xs text-gray-400 dark:text-white/30 mt-0.5">42件の記録 ・ 56.3h</div></div>
+            <button class="text-xs bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.06] px-3 py-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-200 dark:hover:bg-white/[0.08] transition">復元</button>
+          </div>
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 flex items-center gap-4 opacity-60 transition-colors">
+            <div class="w-5 h-5 rounded-full bg-cyan-400 flex-shrink-0"></div>
+            <div class="flex-1"><span class="text-sm font-medium">動画編集</span><div class="text-xs text-gray-400 dark:text-white/30 mt-0.5">18件の記録 ・ 32.1h</div></div>
+            <button class="text-xs bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.06] px-3 py-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-200 dark:hover:bg-white/[0.08] transition">復元</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add Category Modal -->
+<div id="cm" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" onclick="this.parentElement.classList.add('hidden')"></div>
+  <div class="relative bg-white dark:bg-[#1e1e2e] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-6 w-full max-w-sm shadow-2xl transition-colors">
+    <h3 class="text-lg font-semibold mb-5">カテゴリーを追加</h3>
+    <div class="space-y-4">
+      <div><label class="block text-xs text-gray-500 dark:text-white/40 mb-1.5">カテゴリー名</label><input type="text" placeholder="例: プログラミング" class="w-full bg-gray-50 dark:bg-[#11111b] border border-gray-200 dark:border-white/[0.08] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-violet-400 transition"></div>
+      <div><label class="block text-xs text-gray-500 dark:text-white/40 mb-2">色を選択</label>
+        <div class="flex gap-2 flex-wrap">
+          <button class="w-9 h-9 rounded-xl bg-blue-400 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#1e1e2e] ring-blue-400 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-emerald-400 hover:scale-110 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-amber-400 hover:scale-110 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-rose-400 hover:scale-110 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-violet-400 hover:scale-110 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-cyan-400 hover:scale-110 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-pink-400 hover:scale-110 transition"></button>
+          <button class="w-9 h-9 rounded-xl bg-orange-400 hover:scale-110 transition"></button>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="document.getElementById('cm').classList.add('hidden')" class="flex-1 bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-white/70 py-3 rounded-xl text-sm transition hover:bg-gray-200 dark:hover:bg-white/[0.08]">キャンセル</button>
+      <button class="flex-1 bg-violet-500 hover:bg-violet-600 text-white py-3 rounded-xl text-sm transition">追加</button>
+    </div>
+  </div>
+</div>
+
+<nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#11111b]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/[0.06] z-40"><div class="flex items-center justify-around py-2 px-2"><a href="dashboard.html" class="text-gray-400 dark:text-white/40 text-[10px]">ホーム</a><a href="records.html" class="text-gray-400 dark:text-white/40 text-[10px]">記録</a><a href="goals.html" class="text-gray-400 dark:text-white/40 text-[10px]">目標</a><a href="charts.html" class="text-gray-400 dark:text-white/40 text-[10px]">グラフ</a><a href="achievements.html" class="text-gray-400 dark:text-white/40 text-[10px]">その他</a></div></nav>
+</body>
+</html>

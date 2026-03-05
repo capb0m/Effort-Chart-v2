@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Effort Chart - 実績</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['DM Sans','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+<style>body{font-family:'DM Sans',sans-serif}.scrollbar-hide::-webkit-scrollbar{display:none}.scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}</style>
+<script>
+function initTheme(){const t=localStorage.getItem('theme')||'dark';document.documentElement.classList.toggle('dark',t==='dark')}
+function toggleTheme(){const d=document.documentElement;d.classList.toggle('dark');localStorage.setItem('theme',d.classList.contains('dark')?'dark':'light');updateThemeIcon()}
+function updateThemeIcon(){const dark=document.documentElement.classList.contains('dark');document.querySelectorAll('.theme-icon-sun').forEach(e=>e.style.display=dark?'none':'block');document.querySelectorAll('.theme-icon-moon').forEach(e=>e.style.display=dark?'block':'none')}
+initTheme();document.addEventListener('DOMContentLoaded',updateThemeIcon);
+</script>
+</head>
+<body class="bg-gray-50 dark:bg-[#0a0a14] text-gray-900 dark:text-white min-h-screen transition-colors duration-200">
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="hidden lg:flex flex-col w-64 bg-white dark:bg-[#11111b] border-r border-gray-200 dark:border-white/[0.06] p-4 transition-colors">
+    <div class="flex items-center gap-2.5 px-3 py-2 mb-8">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-orange-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+      <span class="font-bold text-lg tracking-tight">Effort Chart</span>
+    </div>
+    <nav class="flex-1 space-y-1">
+      <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/[0.03] transition text-sm">ダッシュボード</a>
+      <a href="records.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">記録</a>
+      <a href="goals.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">目標</a>
+      <a href="charts.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">グラフ</a>
+      <a href="achievements.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-violet-50 dark:bg-white/[0.06] text-violet-700 dark:text-white font-medium text-sm">
+        <svg class="w-5 h-5 text-violet-500 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0"/></svg>
+        実績</a>
+      <a href="categories.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 dark:text-white/50 text-sm">カテゴリー</a>
+    </nav>
+    <div class="space-y-2 border-t border-gray-200 dark:border-white/[0.06] pt-3 mt-2">
+      <button onclick="toggleTheme()" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.03] transition w-full text-sm text-gray-500 dark:text-white/50">
+        <svg class="w-5 h-5 theme-icon-moon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+        <svg class="w-5 h-5 theme-icon-sun" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+        テーマ切替</button>
+      <a href="profile.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.03] transition">
+        <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400 text-sm font-bold">U</div>
+        <div class="flex-1"><div class="text-sm font-medium truncate">ユーザー名</div><div class="text-xs text-gray-400 dark:text-white/30">プロフィール</div></div></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
+    <header class="sticky top-0 z-30 bg-gray-50/80 dark:bg-[#0a0a14]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.06] px-4 lg:px-8 py-4 transition-colors">
+      <h1 class="text-xl font-bold">実績</h1>
+      <p class="text-sm text-gray-500 dark:text-white/40 mt-0.5">達成した実績とチャレンジ</p>
+    </header>
+
+    <div class="px-4 lg:px-8 py-6 max-w-5xl space-y-6">
+
+      <!-- Summary -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-4 text-center transition-colors">
+          <div class="text-2xl font-bold font-mono">18<span class="text-gray-400 dark:text-white/30 text-sm">/43</span></div>
+          <div class="text-xs text-gray-500 dark:text-white/40 mt-1">解除済み</div>
+        </div>
+        <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 text-center transition-colors">
+          <div class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">8</div>
+          <div class="text-xs text-gray-500 dark:text-white/40 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-600"></span>ブロンズ</div>
+        </div>
+        <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 text-center transition-colors">
+          <div class="text-2xl font-bold font-mono text-gray-500 dark:text-gray-300">7</div>
+          <div class="text-xs text-gray-500 dark:text-white/40 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-400"></span>シルバー</div>
+        </div>
+        <div class="bg-white dark:bg-[#1e1e2e]/50 border border-yellow-300 dark:border-yellow-500/20 rounded-2xl p-4 text-center transition-colors">
+          <div class="text-2xl font-bold font-mono text-yellow-600 dark:text-yellow-400">3</div>
+          <div class="text-xs text-gray-500 dark:text-white/40 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span>ゴールド</div>
+        </div>
+      </div>
+
+      <!-- Streak Category -->
+      <div>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4 flex items-center gap-2">🔥 ストリーク</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Unlocked -->
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="text-3xl">🎯</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2"><span class="text-sm font-semibold">ハットトリック</span><span class="w-2 h-2 rounded-full bg-amber-600"></span></div>
+                <p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">3日連続で全デイリー目標達成</p>
+                <p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-02-10 に解除</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="text-3xl">📅</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2"><span class="text-sm font-semibold">一週間の習慣</span><span class="w-2 h-2 rounded-full bg-gray-400"></span></div>
+                <p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">7日連続で全デイリー目標達成</p>
+                <p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-02-20 に解除</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="text-3xl">🏃</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2"><span class="text-sm font-semibold">二週間マラソン</span><span class="w-2 h-2 rounded-full bg-gray-400"></span></div>
+                <p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">14日連続で全デイリー目標達成</p>
+                <p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-03-01 に解除</p>
+              </div>
+            </div>
+          </div>
+          <!-- Locked -->
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 opacity-50 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="text-3xl grayscale">🔒</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-400 dark:text-white/40">鉄の意志</span><span class="w-2 h-2 rounded-full bg-yellow-500/50"></span></div>
+                <p class="text-xs text-gray-400 dark:text-white/30 mt-0.5">30日連続で全デイリー目標達成</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 opacity-50 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="text-3xl grayscale">🔒</div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-400 dark:text-white/40">伝説の継続者</span><span class="w-2 h-2 rounded-full bg-violet-400/50"></span></div>
+                <p class="text-xs text-gray-400 dark:text-white/30 mt-0.5">100日連続で全デイリー目標達成</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Time Category -->
+      <div>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4 flex items-center gap-2">⏱ 累計時間</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">👣</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">はじめの一歩</span><span class="w-2 h-2 rounded-full bg-amber-600"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">累計10時間記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-09-05 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">🌱</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">努力の芽</span><span class="w-2 h-2 rounded-full bg-amber-600"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">累計50時間記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-10-12 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">💯</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">100時間の壁</span><span class="w-2 h-2 rounded-full bg-gray-400"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">累計100時間記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-11-20 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-yellow-300 dark:border-yellow-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">⚡</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">熟練者</span><span class="w-2 h-2 rounded-full bg-yellow-500"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">累計500時間記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-01-15 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-yellow-300 dark:border-yellow-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">🏅</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">マスター</span><span class="w-2 h-2 rounded-full bg-yellow-500"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">累計1,000時間記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-03-02 に解除</p></div></div>
+          </div>
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 opacity-50 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl grayscale">🔒</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-400 dark:text-white/40">グランドマスター</span><span class="w-2 h-2 rounded-full bg-violet-400/50"></span></div><p class="text-xs text-gray-400 dark:text-white/30 mt-0.5">累計5,000時間記録</p></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Records Category -->
+      <div>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4 flex items-center gap-2">📝 記録数</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">✨</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">ファーストステップ</span><span class="w-2 h-2 rounded-full bg-amber-600"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">初めての記録を追加</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-09-01 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">📊</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">記録の達人</span><span class="w-2 h-2 rounded-full bg-gray-400"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">100件の記録を追加</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-12-01 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">💪</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">フルタイムデー</span><span class="w-2 h-2 rounded-full bg-gray-400"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">1日に8時間以上記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-11-15 に解除</p></div></div>
+          </div>
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 opacity-50 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl grayscale">🔒</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-400 dark:text-white/40">千の軌跡</span><span class="w-2 h-2 rounded-full bg-yellow-500/50"></span></div><p class="text-xs text-gray-400 dark:text-white/30 mt-0.5">1,000件の記録を追加</p></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Special Category -->
+      <div>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4 flex items-center gap-2">✨ 特殊</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">🌅</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">早起き</span><span class="w-2 h-2 rounded-full bg-amber-600"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">6:00 AM 前に記録を開始</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-10-08 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">🦉</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">ナイトオウル</span><span class="w-2 h-2 rounded-full bg-amber-600"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">深夜0時以降に記録を終了</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2025-09-15 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-gray-300 dark:border-gray-400/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">🎯</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">ディープフォーカス</span><span class="w-2 h-2 rounded-full bg-gray-400"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">1セッション4時間以上</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-01-20 に解除</p></div></div>
+          </div>
+          <div class="bg-white dark:bg-[#1e1e2e]/50 border border-yellow-300 dark:border-yellow-500/20 rounded-2xl p-4 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl">🏆</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold">皆勤賞</span><span class="w-2 h-2 rounded-full bg-yellow-500"></span></div><p class="text-xs text-gray-500 dark:text-white/40 mt-0.5">30日連続で1件以上の記録</p><p class="text-[10px] text-green-600 dark:text-green-400 mt-1.5">2026-02-28 に解除</p></div></div>
+          </div>
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 opacity-50 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl grayscale">🔒</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-400 dark:text-white/40">ウィークエンドウォリアー</span><span class="w-2 h-2 rounded-full bg-gray-400/50"></span></div><p class="text-xs text-gray-400 dark:text-white/30 mt-0.5">土日に合計8時間以上記録</p></div></div>
+          </div>
+          <div class="bg-gray-50 dark:bg-[#1e1e2e]/20 border border-gray-100 dark:border-white/[0.04] rounded-2xl p-4 opacity-50 transition-colors">
+            <div class="flex items-start gap-3"><div class="text-3xl grayscale">🔒</div><div class="flex-1"><div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-400 dark:text-white/40">記録の鬼</span><span class="w-2 h-2 rounded-full bg-violet-400/50"></span></div><p class="text-xs text-gray-400 dark:text-white/30 mt-0.5">100日連続で1件以上の記録</p></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Mobile Tab Bar -->
+<nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#11111b]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/[0.06] z-40 transition-colors">
+  <div class="flex items-center justify-around py-2 px-2">
+    <a href="dashboard.html" class="flex flex-col items-center gap-0.5 px-3 py-1.5 text-gray-400 dark:text-white/40"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span class="text-[10px]">ホーム</span></a>
+    <a href="records.html" class="flex flex-col items-center gap-0.5 px-3 py-1.5 text-gray-400 dark:text-white/40"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[10px]">記録</span></a>
+    <a href="goals.html" class="flex flex-col items-center gap-0.5 px-3 py-1.5 text-gray-400 dark:text-white/40"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6"/></svg><span class="text-[10px]">目標</span></a>
+    <a href="charts.html" class="flex flex-col items-center gap-0.5 px-3 py-1.5 text-gray-400 dark:text-white/40"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z"/></svg><span class="text-[10px]">グラフ</span></a>
+    <a href="achievements.html" class="flex flex-col items-center gap-0.5 px-3 py-1.5 text-violet-600 dark:text-violet-400"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872"/></svg><span class="text-[10px] font-medium">その他</span></a>
+  </div>
+</nav>
+</body>
+</html>
