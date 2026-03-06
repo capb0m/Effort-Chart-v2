@@ -24,7 +24,8 @@ export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedA
     if (!session?.access_token) return;
     setData(null);
     setChartError(null);
-    fetch(`/api/charts/stacked?mode=${mode}&start=${start}&end=${end}`, {
+    const tz = -new Date().getTimezoneOffset(); // UTC+X の分数（例: JST=540）
+    fetch(`/api/charts/stacked?mode=${mode}&start=${start}&end=${end}&tz=${tz}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     })
       .then((r) => r.json())
