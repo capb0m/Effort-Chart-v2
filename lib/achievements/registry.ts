@@ -12,12 +12,17 @@ export interface AchievementContext {
   longestStreak: number;
   totalRecords: number;
   totalHours: number;
-  totalKeystrokes: number;
+  totalKeystrokes: number;       // 日次最大キーストローク数
+  cumulativeKeystrokes: number;  // 累計キーストローク数
   periodGoalsCompleted: number;
   dailyGoalsAchievedDays: number;
   categories: number;
   consecutiveDaysRecorded: number;
   longestSingleSession: number;
+  maxDailyHours: number;         // 1日の最大合計時間
+  hasEarlyMorningRecord: boolean; // 午前4〜5時台に活動開始
+  hasLateNightRecord: boolean;    // 午前2〜5時台に活動終了
+  hasShortSession: boolean;       // 5分未満の記録あり
 }
 
 export interface AchievementDefinition {

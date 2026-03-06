@@ -1,7 +1,7 @@
 import { AchievementDefinition } from "./registry";
 
 export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
-  // ストリーク系
+  // ===== ストリーク系 =====
   {
     id: "streak_3",
     name: "3日連続",
@@ -30,6 +30,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.currentStreak >= 14,
   },
   {
+    id: "streak_21",
+    name: "3週間の継続",
+    description: "21日連続でデイリー目標を達成",
+    icon: "🔥",
+    category: "streak",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.currentStreak >= 21,
+  },
+  {
     id: "streak_30",
     name: "30日の炎",
     description: "30日連続でデイリー目標を達成",
@@ -37,6 +46,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "streak",
     tier: "gold",
     checkCondition: async (ctx) => ctx.currentStreak >= 30,
+  },
+  {
+    id: "streak_50",
+    name: "50日の執念",
+    description: "50日連続でデイリー目標を達成",
+    icon: "💫",
+    category: "streak",
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.currentStreak >= 50,
   },
   {
     id: "streak_100",
@@ -48,6 +66,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.currentStreak >= 100,
   },
   {
+    id: "streak_200",
+    name: "200日の鉄人",
+    description: "200日連続でデイリー目標を達成",
+    icon: "🦾",
+    category: "streak",
+    tier: "platinum",
+    checkCondition: async (ctx) => ctx.currentStreak >= 200,
+  },
+  {
     id: "streak_365",
     name: "1年の伝説",
     description: "365日連続でデイリー目標を達成",
@@ -57,7 +84,7 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.currentStreak >= 365,
   },
 
-  // 累計時間系
+  // ===== 累計時間系 =====
   {
     id: "total_hours_10",
     name: "10時間突破",
@@ -66,6 +93,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "total_time",
     tier: "bronze",
     checkCondition: async (ctx) => ctx.totalHours >= 10,
+  },
+  {
+    id: "total_hours_25",
+    name: "25時間突破",
+    description: "累計25時間の活動記録",
+    icon: "⏱️",
+    category: "total_time",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.totalHours >= 25,
   },
   {
     id: "total_hours_50",
@@ -86,6 +122,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.totalHours >= 100,
   },
   {
+    id: "total_hours_200",
+    name: "200時間の蓄積",
+    description: "累計200時間の活動記録",
+    icon: "⏰",
+    category: "total_time",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.totalHours >= 200,
+  },
+  {
     id: "total_hours_500",
     name: "500時間の探求",
     description: "累計500時間の活動記録",
@@ -102,6 +147,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "total_time",
     tier: "gold",
     checkCondition: async (ctx) => ctx.totalHours >= 1000,
+  },
+  {
+    id: "total_hours_2000",
+    name: "2000時間の道",
+    description: "累計2000時間の活動記録",
+    icon: "💎",
+    category: "total_time",
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.totalHours >= 2000,
   },
   {
     id: "total_hours_5000",
@@ -122,7 +176,7 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.totalHours >= 10000,
   },
 
-  // 記録数系
+  // ===== 記録数系 =====
   {
     id: "records_1",
     name: "最初の一歩",
@@ -131,6 +185,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "records",
     tier: "bronze",
     checkCondition: async (ctx) => ctx.totalRecords >= 1,
+  },
+  {
+    id: "records_10",
+    name: "10件記録",
+    description: "10件の活動記録を追加",
+    icon: "📝",
+    category: "records",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.totalRecords >= 10,
   },
   {
     id: "records_50",
@@ -151,6 +214,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.totalRecords >= 100,
   },
   {
+    id: "records_200",
+    name: "200件の継続者",
+    description: "200件の活動記録を追加",
+    icon: "📊",
+    category: "records",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.totalRecords >= 200,
+  },
+  {
     id: "records_500",
     name: "500件の記録者",
     description: "500件の活動記録を追加",
@@ -167,6 +239,24 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "records",
     tier: "gold",
     checkCondition: async (ctx) => ctx.totalRecords >= 1000,
+  },
+  {
+    id: "records_2000",
+    name: "2000件の記録魔",
+    description: "2000件の活動記録を追加",
+    icon: "🏆",
+    category: "records",
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.totalRecords >= 2000,
+  },
+  {
+    id: "records_5000",
+    name: "5000件の伝説",
+    description: "5000件の活動記録を追加",
+    icon: "👑",
+    category: "records",
+    tier: "platinum",
+    checkCondition: async (ctx) => ctx.totalRecords >= 5000,
   },
   {
     id: "daily_max_8h",
@@ -187,7 +277,7 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.longestSingleSession >= 12,
   },
 
-  // 目標達成系
+  // ===== 目標達成系 =====
   {
     id: "goal_first_daily",
     name: "初デイリー達成",
@@ -196,6 +286,33 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "goals",
     tier: "bronze",
     checkCondition: async (ctx) => ctx.dailyGoalsAchievedDays >= 1,
+  },
+  {
+    id: "daily_goals_10days",
+    name: "10日達成",
+    description: "累計10日間デイリー目標を達成",
+    icon: "🎯",
+    category: "goals",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.dailyGoalsAchievedDays >= 10,
+  },
+  {
+    id: "daily_goals_50days",
+    name: "50日達成",
+    description: "累計50日間デイリー目標を達成",
+    icon: "🏅",
+    category: "goals",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.dailyGoalsAchievedDays >= 50,
+  },
+  {
+    id: "daily_goals_100days",
+    name: "100日達成",
+    description: "累計100日間デイリー目標を達成",
+    icon: "🏆",
+    category: "goals",
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.dailyGoalsAchievedDays >= 100,
   },
   {
     id: "goal_first_period",
@@ -243,7 +360,25 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.currentStreak >= 30,
   },
 
-  // WhatPulse系
+  // ===== WhatPulse系 =====
+  {
+    id: "keys_1k",
+    name: "千鍵入力",
+    description: "1日に1000回以上のキーストローク",
+    icon: "⌨️",
+    category: "whatpulse",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.totalKeystrokes >= 1000,
+  },
+  {
+    id: "keys_5k",
+    name: "5千鍵入力",
+    description: "1日に5000回以上のキーストローク",
+    icon: "⌨️",
+    category: "whatpulse",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.totalKeystrokes >= 5000,
+  },
   {
     id: "keys_10k",
     name: "1万キー",
@@ -272,13 +407,40 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.totalKeystrokes >= 100000,
   },
   {
+    id: "keys_200k",
+    name: "20万キー",
+    description: "1日に20万回以上のキーストローク",
+    icon: "🔥",
+    category: "whatpulse",
+    tier: "platinum",
+    checkCondition: async (ctx) => ctx.totalKeystrokes >= 200000,
+  },
+  {
+    id: "keys_total_500k",
+    name: "累計50万キー",
+    description: "累計50万回のキーストローク",
+    icon: "💻",
+    category: "whatpulse",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.cumulativeKeystrokes >= 500000,
+  },
+  {
     id: "keys_total_1m",
     name: "累計100万キー",
     description: "累計100万回のキーストローク",
     icon: "💻",
     category: "whatpulse",
     tier: "silver",
-    checkCondition: async (ctx) => ctx.totalKeystrokes >= 1000000,
+    checkCondition: async (ctx) => ctx.cumulativeKeystrokes >= 1000000,
+  },
+  {
+    id: "keys_total_5m",
+    name: "累計500万キー",
+    description: "累計500万回のキーストローク",
+    icon: "🖥️",
+    category: "whatpulse",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.cumulativeKeystrokes >= 5000000,
   },
   {
     id: "keys_total_10m",
@@ -287,10 +449,19 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     icon: "🖥️",
     category: "whatpulse",
     tier: "gold",
-    checkCondition: async (ctx) => ctx.totalKeystrokes >= 10000000,
+    checkCondition: async (ctx) => ctx.cumulativeKeystrokes >= 10000000,
+  },
+  {
+    id: "keys_total_50m",
+    name: "累計5000万キー",
+    description: "累計5000万回のキーストローク",
+    icon: "🤖",
+    category: "whatpulse",
+    tier: "platinum",
+    checkCondition: async (ctx) => ctx.cumulativeKeystrokes >= 50000000,
   },
 
-  // 特殊系
+  // ===== 特殊系 =====
   {
     id: "early_bird",
     name: "早起き鳥",
@@ -299,6 +470,15 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "special",
     tier: "bronze",
     checkCondition: async (ctx) => ctx.totalRecords >= 1,
+  },
+  {
+    id: "dawn_breaker",
+    name: "夜明け前",
+    description: "午前4〜5時台に活動開始",
+    icon: "🌃",
+    category: "special",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.hasEarlyMorningRecord,
   },
   {
     id: "night_owl",
@@ -310,6 +490,24 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.totalRecords >= 1,
   },
   {
+    id: "past_midnight",
+    name: "深夜の集中",
+    description: "午前2時以降まで活動を続けた",
+    icon: "🌙",
+    category: "special",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.hasLateNightRecord,
+  },
+  {
+    id: "micro_session",
+    name: "隙間の努力",
+    description: "5分未満の短い記録を追加",
+    icon: "⚡",
+    category: "special",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.hasShortSession,
+  },
+  {
     id: "multi_category_day",
     name: "マルチタスカー",
     description: "1日に3カテゴリー以上記録",
@@ -319,13 +517,22 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.categories >= 3,
   },
   {
-    id: "weekend_warrior",
-    name: "週末戦士",
-    description: "土日に8時間以上の活動",
-    icon: "⚔️",
+    id: "categories_5",
+    name: "バラエティスター",
+    description: "5カテゴリー以上を作成",
+    icon: "🌈",
+    category: "special",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.categories >= 5,
+  },
+  {
+    id: "categories_10",
+    name: "カテゴリーコレクター",
+    description: "10カテゴリー以上を作成",
+    icon: "🌈",
     category: "special",
     tier: "silver",
-    checkCondition: async (ctx) => ctx.longestSingleSession >= 8,
+    checkCondition: async (ctx) => ctx.categories >= 10,
   },
   {
     id: "longest_session_4h",
@@ -337,13 +544,31 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     checkCondition: async (ctx) => ctx.longestSingleSession >= 4,
   },
   {
-    id: "categories_5",
-    name: "バラエティスター",
-    description: "5カテゴリー以上を作成",
-    icon: "🌈",
+    id: "marathon_session",
+    name: "マラソンセッション",
+    description: "6時間以上の連続記録",
+    icon: "🏃",
     category: "special",
-    tier: "bronze",
-    checkCondition: async (ctx) => ctx.categories >= 5,
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.longestSingleSession >= 6,
+  },
+  {
+    id: "weekend_warrior",
+    name: "週末戦士",
+    description: "土日に8時間以上の活動",
+    icon: "⚔️",
+    category: "special",
+    tier: "silver",
+    checkCondition: async (ctx) => ctx.longestSingleSession >= 8,
+  },
+  {
+    id: "full_day_record",
+    name: "完全記録の日",
+    description: "1日合計12時間以上を記録",
+    icon: "📅",
+    category: "special",
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.maxDailyHours >= 12,
   },
   {
     id: "consecutive_record_30",
@@ -362,5 +587,23 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
     category: "special",
     tier: "platinum",
     checkCondition: async (ctx) => ctx.consecutiveDaysRecorded >= 100,
+  },
+  {
+    id: "comeback_king",
+    name: "カムバック",
+    description: "ストリークが途切れた後に再び連続記録を開始",
+    icon: "💪",
+    category: "special",
+    tier: "bronze",
+    checkCondition: async (ctx) => ctx.longestStreak > ctx.currentStreak && ctx.currentStreak >= 1,
+  },
+  {
+    id: "anniversary",
+    name: "記念日",
+    description: "365日以上継続して記録を積み重ねた",
+    icon: "🎂",
+    category: "special",
+    tier: "gold",
+    checkCondition: async (ctx) => ctx.consecutiveDaysRecorded >= 365,
   },
 ];
