@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCategories } from "@/hooks/useCategories";
 import { useToast } from "@/components/ui/Toast";
@@ -12,6 +12,16 @@ interface RecordFormProps {
   onSaved?: () => void;
 }
 
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${day}T${h}:${mi}`;
+}
+
 export function RecordForm({ onSaved }: RecordFormProps) {
   const [mode, setMode] = useState<Mode>(1);
   const [categoryId, setCategoryId] = useState("");
@@ -20,11 +30,26 @@ export function RecordForm({ onSaved }: RecordFormProps) {
   const [durationHours, setDurationHours] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [lastEndTime, setLastEndTime] = useState<string | null>(null);
 
   const { session } = useAuth();
   const { categories } = useCategories();
   const { toast } = useToast();
   const activeCategories = categories.filter((c) => !c.is_archived);
+
+  useEffect(() => {
+    if (!session?.access_token) return;
+    fetch("/api/records?limit=1", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLastEndTime(data[0].end_time);
+        }
+      })
+      .catch(() => {});
+  }, [session?.access_token]);
 
   const computeTimes = (): { start: string; end: string } | null => {
     const dh = parseFloat(durationHours || "0");
@@ -71,10 +96,10 @@ export function RecordForm({ onSaved }: RecordFormProps) {
         toast(data.error ?? "保存に失敗しました", "error");
       } else {
         toast("記録を保存しました", "success");
+        setLastEndTime(times.end);
         setStartTime(""); setEndTime(""); setDurationHours(""); setDurationMinutes("");
         onSaved?.();
 
-        // 実績チェック
         fetch("/api/achievements/check", {
           method: "POST",
           headers: { Authorization: `Bearer ${session?.access_token}` },
@@ -126,7 +151,7 @@ export function RecordForm({ onSaved }: RecordFormProps) {
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 transition"
+            className="w-full bg-gray-50 dark:bg-[#1e1e2e] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 transition"
           >
             <option value="">選択してください</option>
             {activeCategories.map((c) => (
@@ -138,7 +163,18 @@ export function RecordForm({ onSaved }: RecordFormProps) {
         {/* Start time */}
         {(mode === 1 || mode === 2) && (
           <div>
-            <label className="text-xs font-medium text-gray-600 dark:text-white/60 mb-1.5 block">開始時間</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-gray-600 dark:text-white/60">開始時間</label>
+              {lastEndTime && (
+                <button
+                  type="button"
+                  onClick={() => setStartTime(toDatetimeLocal(lastEndTime))}
+                  className="text-xs text-violet-500 hover:text-violet-600 transition"
+                >
+                  前回終了時刻
+                </button>
+              )}
+            </div>
             <input
               type="datetime-local"
               value={startTime}
@@ -151,7 +187,16 @@ export function RecordForm({ onSaved }: RecordFormProps) {
         {/* End time */}
         {(mode === 2 || mode === 3) && (
           <div>
-            <label className="text-xs font-medium text-gray-600 dark:text-white/60 mb-1.5 block">終了時間</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-gray-600 dark:text-white/60">終了時間</label>
+              <button
+                type="button"
+                onClick={() => setEndTime(toDatetimeLocal(new Date().toISOString()))}
+                className="text-xs text-violet-500 hover:text-violet-600 transition"
+              >
+                現在時刻
+              </button>
+            </div>
             <input
               type="datetime-local"
               value={endTime}

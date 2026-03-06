@@ -9,7 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/Toast";
 import { UserProfile } from "@/types/database";
-import { Sun, Moon, Monitor, Save, RefreshCw, LogOut } from "lucide-react";
+import { Sun, Moon, Monitor, Save, RefreshCw, LogOut, Keyboard, Clock } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export default function ProfilePage() {
@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [stats, setStats] = useState<{ totalKeys: number; totalHours: number } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -38,6 +39,10 @@ export default function ProfilePage() {
           setApiKey(data.whatpulse_api_key ?? "");
         }
       });
+    fetch("/api/stats", { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
   }, [session?.access_token]);
 
   const handleSave = async () => {
@@ -117,6 +122,33 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
+
+          {/* Stats */}
+          {stats && (
+            <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6">
+              <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4">累計統計</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-xl">
+                    <Keyboard className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400 dark:text-white/40 mb-0.5">累計タイプ数</div>
+                    <div className="text-xl font-bold font-mono">{stats.totalKeys.toLocaleString()}</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-orange-100 dark:bg-orange-500/20 rounded-xl">
+                    <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400 dark:text-white/40 mb-0.5">総努力時間</div>
+                    <div className="text-xl font-bold font-mono">{stats.totalHours.toFixed(1)}h</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* WhatPulse */}
           <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6">

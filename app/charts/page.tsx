@@ -10,6 +10,7 @@ import { StackedAreaChart } from "@/components/charts/StackedAreaChart";
 import { TimelineDonutChart } from "@/components/charts/TimelineDonutChart";
 import { cn } from "@/lib/utils/cn";
 import { format, subDays } from "date-fns";
+import { History, ChevronDown, ChevronUp, X } from "lucide-react";
 
 type ChartMode = "period" | "cumulative";
 type PeriodPreset = "week" | "month" | "3month";
@@ -20,6 +21,9 @@ export default function ChartsPage() {
   const [chartMode, setChartMode] = useState<ChartMode>("period");
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>("week");
   const [timelineDate, setTimelineDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [extendedStart, setExtendedStart] = useState<string | null>(null);
+  const [showExtendBox, setShowExtendBox] = useState(false);
+  const [customFrom, setCustomFrom] = useState("");
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -31,8 +35,24 @@ export default function ChartsPage() {
   const today = format(now, "yyyy-MM-dd");
   const days = periodPreset === "week" ? 7 : periodPreset === "month" ? 30 : 90;
   const periodStart = format(subDays(now, days - 1), "yyyy-MM-dd");
-  // period: 90日分ロードしてドラッグ/ズームで移動 / cumulative: 選択期間のみ
-  const chartStart = chartMode === "period" ? format(subDays(now, 89), "yyyy-MM-dd") : periodStart;
+
+  // extendedStart が設定されている場合はそこから、なければ通常の範囲
+  const chartStart = extendedStart
+    ? extendedStart
+    : chartMode === "period"
+      ? format(subDays(now, 89), "yyyy-MM-dd")
+      : periodStart;
+
+  const handleExtend = () => {
+    if (!customFrom) return;
+    setExtendedStart(customFrom);
+    setShowExtendBox(false);
+  };
+
+  const handleReset = () => {
+    setExtendedStart(null);
+    setCustomFrom("");
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -67,6 +87,57 @@ export default function ChartsPage() {
               活動グラフ
             </h2>
             <StackedAreaChart mode={chartMode} start={chartStart} end={today} windowSize={days} />
+
+            {/* 古い記録取得 */}
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.04]">
+              <button
+                onClick={() => setShowExtendBox(!showExtendBox)}
+                className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/30 hover:text-violet-500 dark:hover:text-violet-400 transition"
+              >
+                <History className="w-3.5 h-3.5" />
+                さらに古い記録を取得
+                {extendedStart && (
+                  <span className="text-violet-500 dark:text-violet-400 ml-1">({extendedStart} 〜)</span>
+                )}
+                {showExtendBox ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+
+              {showExtendBox && (
+                <div className="mt-3 p-4 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl">
+                  <p className="text-xs text-gray-500 dark:text-white/40 mb-3">
+                    取得する期間の開始日を選択してください。現在日までのデータがグラフに追加されます。
+                  </p>
+                  <div className="flex flex-wrap gap-2 items-end">
+                    <div>
+                      <label className="text-xs text-gray-500 dark:text-white/40 mb-1 block">開始日</label>
+                      <input
+                        type="date"
+                        value={customFrom}
+                        max={format(subDays(now, 1), "yyyy-MM-dd")}
+                        onChange={(e) => setCustomFrom(e.target.value)}
+                        className="bg-white dark:bg-[#1e1e2e] border border-gray-200 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 transition"
+                      />
+                    </div>
+                    <button
+                      disabled={!customFrom}
+                      onClick={handleExtend}
+                      className="px-3 py-1.5 bg-violet-500 text-white text-xs rounded-lg hover:bg-violet-600 transition disabled:opacity-50"
+                    >
+                      取得
+                    </button>
+                    {extendedStart && (
+                      <button
+                        onClick={handleReset}
+                        className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 dark:border-white/[0.06] text-gray-500 dark:text-white/40 text-xs rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.03] transition"
+                      >
+                        <X className="w-3 h-3" />
+                        リセット
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Timeline Donut */}
