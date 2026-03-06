@@ -10,7 +10,7 @@ import { StackedAreaChart } from "@/components/charts/StackedAreaChart";
 import { TimelineDonutChart } from "@/components/charts/TimelineDonutChart";
 import { cn } from "@/lib/utils/cn";
 import { format, subDays } from "date-fns";
-import { History, ChevronDown, ChevronUp, X } from "lucide-react";
+import { History, ChevronDown, ChevronUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 type ChartMode = "period" | "cumulative";
 type PeriodPreset = "week" | "month" | "3month";
@@ -146,12 +146,37 @@ export default function ChartsPage() {
               <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider">
                 24時間タイムライン
               </h2>
-              <input
-                type="date"
-                value={timelineDate}
-                onChange={(e) => setTimelineDate(e.target.value)}
-                className="text-xs bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-lg px-2 py-1 focus:outline-none"
-              />
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    const d = new Date(timelineDate + "T12:00:00");
+                    d.setDate(d.getDate() - 1);
+                    setTimelineDate(format(d, "yyyy-MM-dd"));
+                  }}
+                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.04] text-gray-400 dark:text-white/30 transition"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <input
+                  type="date"
+                  value={timelineDate}
+                  max={today}
+                  onChange={(e) => setTimelineDate(e.target.value)}
+                  className="text-xs bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-lg px-2 py-1 focus:outline-none"
+                />
+                <button
+                  onClick={() => {
+                    const d = new Date(timelineDate + "T12:00:00");
+                    d.setDate(d.getDate() + 1);
+                    const next = format(d, "yyyy-MM-dd");
+                    if (next <= today) setTimelineDate(next);
+                  }}
+                  disabled={timelineDate >= today}
+                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/[0.04] text-gray-400 dark:text-white/30 transition disabled:opacity-30"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <TimelineDonutChart date={timelineDate} />
           </div>
