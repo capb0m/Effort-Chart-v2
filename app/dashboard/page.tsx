@@ -17,6 +17,7 @@ import { mutate } from "swr";
 import Link from "next/link";
 import { ExternalLink, Flame, Keyboard, Trophy, RefreshCw } from "lucide-react";
 import confetti from "canvas-confetti";
+import { cn } from "@/lib/utils/cn";
 
 // デイリー目標の進捗を取得するフック
 // ローカルタイムゾーンの今日の日付を返す (YYYY-MM-DD)
