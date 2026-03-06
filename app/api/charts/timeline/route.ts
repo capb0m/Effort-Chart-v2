@@ -10,13 +10,16 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") ?? format(new Date(), "yyyy-MM-dd");
+  // クライアントからローカル変換済みのUTC start/end を受け取る（なければ旧来のUTC固定にフォールバック）
+  const start = searchParams.get("start") ?? `${date}T00:00:00Z`;
+  const end = searchParams.get("end") ?? `${date}T23:59:59Z`;
 
   const { data: records } = await supabase
     .from("records")
     .select("*, categories(*)")
     .eq("user_id", user.id)
-    .gte("start_time", `${date}T00:00:00Z`)
-    .lte("end_time", `${date}T23:59:59Z`)
+    .gte("start_time", start)
+    .lte("end_time", end)
     .order("start_time");
 
   const segments = (records ?? []).map((r) => {

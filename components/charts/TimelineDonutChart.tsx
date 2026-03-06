@@ -36,7 +36,10 @@ export function TimelineDonutChart({ date }: TimelineDonutChartProps) {
 
   useEffect(() => {
     if (!session?.access_token) return;
-    fetch(`/api/charts/timeline?date=${date}`, {
+    // ローカル日付の 00:00〜23:59:59 を UTC に変換してクエリ
+    const startUTC = new Date(`${date}T00:00:00`).toISOString();
+    const endUTC = new Date(`${date}T23:59:59`).toISOString();
+    fetch(`/api/charts/timeline?start=${encodeURIComponent(startUTC)}&end=${encodeURIComponent(endUTC)}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     })
       .then((r) => r.json())

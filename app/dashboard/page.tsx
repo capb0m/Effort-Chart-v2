@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils/date";
 import { mutate } from "swr";
 import Link from "next/link";
-import { ExternalLink, Flame, Keyboard, Trophy } from "lucide-react";
+import { ExternalLink, Flame, Keyboard, Trophy, RefreshCw } from "lucide-react";
 import confetti from "canvas-confetti";
 
 // デイリー目標の進捗を取得するフック
@@ -76,7 +76,7 @@ export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { streak } = useStreak();
-  const { whatpulse, syncError: whatpulseSyncError } = useWhatPulse();
+  const { whatpulse, syncError: whatpulseSyncError, isSyncing: whatpulseSyncing, sync: syncWhatPulse } = useWhatPulse();
   const { achievements, mutate: mutateAchievements } = useAchievements();
   const { toast } = useToast();
   const progress = useTodayProgress();
@@ -195,10 +195,20 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {whatpulse?.hasConfig && (
               <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 transition-colors">
-                <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-3">
-                  <Keyboard className="w-4 h-4 inline mr-1.5" />
-                  キータイプ
-                </h2>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider">
+                    <Keyboard className="w-4 h-4 inline mr-1.5" />
+                    キータイプ
+                  </h2>
+                  <button
+                    onClick={syncWhatPulse}
+                    disabled={whatpulseSyncing}
+                    className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/30 hover:text-violet-500 dark:hover:text-violet-400 transition disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn("w-3.5 h-3.5", whatpulseSyncing && "animate-spin")} />
+                    同期
+                  </button>
+                </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold font-mono">
                     {whatpulse.today.toLocaleString()}

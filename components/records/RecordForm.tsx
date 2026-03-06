@@ -168,7 +168,15 @@ export function RecordForm({ onSaved }: RecordFormProps) {
               {lastEndTime && (
                 <button
                   type="button"
-                  onClick={() => setStartTime(toDatetimeLocal(lastEndTime))}
+                  onClick={() => {
+                    const d = new Date(lastEndTime);
+                    // 秒・ミリ秒があると新記録と前記録が重複するため、次の分に切り上げる
+                    if (d.getSeconds() > 0 || d.getMilliseconds() > 0) {
+                      d.setSeconds(0, 0);
+                      d.setMinutes(d.getMinutes() + 1);
+                    }
+                    setStartTime(toDatetimeLocal(d.toISOString()));
+                  }}
                   className="text-xs text-violet-500 hover:text-violet-600 transition"
                 >
                   前回終了時刻
