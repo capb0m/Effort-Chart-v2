@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     .limit(limit);
 
   if (start) query = query.gte("start_time", start);
-  if (end) query = query.lte("end_time", end);
+  if (end) query = query.lte("start_time", end);
 
   const { data, error: dbError } = await query;
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });

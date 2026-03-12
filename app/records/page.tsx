@@ -77,6 +77,7 @@ export default function RecordsPage() {
   const [period, setPeriod] = useState<Period>("day");
   const [offset, setOffset] = useState(0);
   const [durationMode, setDurationMode] = useState<DurationMode>("h");
+  const [editingRecord, setEditingRecord] = useState<RecordWithCategory | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -124,7 +125,11 @@ export default function RecordsPage() {
       <main className="flex-1 overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
         <Header title="記録" />
         <div className="px-4 lg:px-8 py-6 space-y-6 max-w-4xl">
-          <RecordForm onSaved={fetchRecords} />
+          <RecordForm
+            onSaved={fetchRecords}
+            editRecord={editingRecord}
+            onCancel={() => setEditingRecord(null)}
+          />
 
           {/* Records List */}
           <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl overflow-hidden">
@@ -202,7 +207,14 @@ export default function RecordsPage() {
                   const ms = end.getTime() - start.getTime();
                   const cat = r.categories;
                   return (
-                    <div key={r.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition">
+                    <div
+                      key={r.id}
+                      onDoubleClick={() => { setEditingRecord(r); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      className={cn(
+                        "flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer",
+                        editingRecord?.id === r.id && "bg-violet-50 dark:bg-violet-500/10"
+                      )}
+                    >
                       <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color ?? "#888" }} />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium">{cat?.name ?? "不明"}</div>
@@ -214,7 +226,7 @@ export default function RecordsPage() {
                       </div>
                       <span className="text-sm font-mono text-gray-600 dark:text-white/70">{formatDuration(ms, durationMode)}</span>
                       <button
-                        onClick={() => handleDelete(r.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
                         className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 text-gray-400 dark:text-white/30 hover:text-red-500 transition"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -5,7 +5,8 @@
       "Bash(npm install)",
       "Bash(npm install next@latest)",
       "Bash(npm run build)",
-      "Bash(node -e \"const p = require\\(''./node_modules/@supabase/supabase-js/package.json''\\); console.log\\(p.version\\)\")"
+      "Bash(node -e \"const p = require\\(''./node_modules/@supabase/supabase-js/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(find c:/Programming/Effort_Chart_v2 -not -path */node_modules/* -name *.tsx -o -name *.ts)"
     ]
   }
 }

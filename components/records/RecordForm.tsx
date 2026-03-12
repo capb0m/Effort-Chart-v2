@@ -5,11 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCategories } from "@/hooks/useCategories";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils/cn";
+import { RecordWithCategory } from "@/types/database";
 
 type Mode = 1 | 2 | 3;
 
 interface RecordFormProps {
   onSaved?: () => void;
+  editRecord?: RecordWithCategory | null;
+  onCancel?: () => void;
 }
 
 function toDatetimeLocal(iso: string): string {
@@ -22,7 +25,7 @@ function toDatetimeLocal(iso: string): string {
   return `${y}-${mo}-${day}T${h}:${mi}`;
 }
 
-export function RecordForm({ onSaved }: RecordFormProps) {
+export function RecordForm({ onSaved, editRecord, onCancel }: RecordFormProps) {
   const [mode, setMode] = useState<Mode>(1);
   const [categoryId, setCategoryId] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -37,8 +40,30 @@ export function RecordForm({ onSaved }: RecordFormProps) {
   const { toast } = useToast();
   const activeCategories = categories.filter((c) => !c.is_archived);
 
+  const isEditing = !!editRecord;
+
+  // 編集レコードが渡されたときにフォームを初期化
   useEffect(() => {
-    if (!session?.access_token) return;
+    if (editRecord) {
+      setMode(2);
+      setCategoryId(editRecord.category_id);
+      setStartTime(toDatetimeLocal(editRecord.start_time));
+      setEndTime(toDatetimeLocal(editRecord.end_time));
+      setDurationHours("");
+      setDurationMinutes("");
+    } else {
+      // 編集キャンセル時はリセット
+      setMode(1);
+      setCategoryId("");
+      setStartTime("");
+      setEndTime("");
+      setDurationHours("");
+      setDurationMinutes("");
+    }
+  }, [editRecord]);
+
+  useEffect(() => {
+    if (!session?.access_token || isEditing) return;
     fetch("/api/records?limit=1", {
       headers: { Authorization: `Bearer ${session.access_token}` },
     })
@@ -49,7 +74,7 @@ export function RecordForm({ onSaved }: RecordFormProps) {
         }
       })
       .catch(() => {});
-  }, [session?.access_token]);
+  }, [session?.access_token, isEditing]);
 
   const computeTimes = (): { start: string; end: string } | null => {
     const dh = parseFloat(durationHours || "0");
@@ -83,33 +108,54 @@ export function RecordForm({ onSaved }: RecordFormProps) {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/records", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ category_id: categoryId, start_time: times.start, end_time: times.end }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast(data.error ?? "保存に失敗しました", "error");
+      if (isEditing && editRecord) {
+        // 編集モード: PATCH
+        const res = await fetch(`/api/records/${editRecord.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ category_id: categoryId, start_time: times.start, end_time: times.end }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast(data.error ?? "更新に失敗しました", "error");
+        } else {
+          toast("記録を更新しました", "success");
+          onSaved?.();
+          onCancel?.();
+        }
       } else {
-        toast("記録を保存しました", "success");
-        setLastEndTime(times.end);
-        setStartTime(""); setEndTime(""); setDurationHours(""); setDurationMinutes("");
-        onSaved?.();
-
-        fetch("/api/achievements/check", {
+        // 新規作成モード: POST
+        const res = await fetch("/api/records", {
           method: "POST",
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        }).then((r) => r.json()).then((data) => {
-          if (data.newlyUnlocked?.length > 0) {
-            for (const a of data.newlyUnlocked) {
-              toast(`🏆 実績解除: ${a.icon} ${a.name}`, "success");
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ category_id: categoryId, start_time: times.start, end_time: times.end }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast(data.error ?? "保存に失敗しました", "error");
+        } else {
+          toast("記録を保存しました", "success");
+          setLastEndTime(times.end);
+          setStartTime(""); setEndTime(""); setDurationHours(""); setDurationMinutes("");
+          onSaved?.();
+
+          fetch("/api/achievements/check", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session?.access_token}` },
+          }).then((r) => r.json()).then((data) => {
+            if (data.newlyUnlocked?.length > 0) {
+              for (const a of data.newlyUnlocked) {
+                toast(`🏆 実績解除: ${a.icon} ${a.name}`, "success");
+              }
             }
-          }
-        }).catch(() => {});
+          }).catch(() => {});
+        }
       }
     } finally {
       setSaving(false);
@@ -118,9 +164,20 @@ export function RecordForm({ onSaved }: RecordFormProps) {
 
   return (
     <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6">
-      <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider mb-4">
-        記録を追加
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider">
+          {isEditing ? "記録を編集" : "記録を追加"}
+        </h2>
+        {isEditing && onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 transition"
+          >
+            キャンセル
+          </button>
+        )}
+      </div>
 
       {/* Mode tabs */}
       <div className="flex gap-1 bg-gray-100 dark:bg-white/[0.04] rounded-xl p-1 mb-5">
@@ -165,12 +222,11 @@ export function RecordForm({ onSaved }: RecordFormProps) {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-medium text-gray-600 dark:text-white/60">開始時間</label>
-              {lastEndTime && (
+              {!isEditing && lastEndTime && (
                 <button
                   type="button"
                   onClick={() => {
                     const d = new Date(lastEndTime);
-                    // 秒・ミリ秒があると新記録と前記録が重複するため、次の分に切り上げる
                     if (d.getSeconds() > 0 || d.getMilliseconds() > 0) {
                       d.setSeconds(0, 0);
                       d.setMinutes(d.getMinutes() + 1);
@@ -252,7 +308,7 @@ export function RecordForm({ onSaved }: RecordFormProps) {
           disabled={saving}
           className="w-full bg-violet-500 hover:bg-violet-600 text-white font-medium py-2.5 rounded-xl transition disabled:opacity-50"
         >
-          {saving ? "保存中..." : "記録を追加"}
+          {saving ? "保存中..." : isEditing ? "変更を保存" : "記録を追加"}
         </button>
       </form>
     </div>
