@@ -15,13 +15,17 @@ interface RecordFormProps {
   onCancel?: () => void;
 }
 
-function toDatetimeLocal(iso: string): string {
+function toDatetimeLocal(iso: string, includeSeconds = false): string {
   const d = new Date(iso);
   const y = d.getFullYear();
   const mo = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   const h = String(d.getHours()).padStart(2, "0");
   const mi = String(d.getMinutes()).padStart(2, "0");
+  if (includeSeconds) {
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    return `${y}-${mo}-${day}T${h}:${mi}:${ss}`;
+  }
   return `${y}-${mo}-${day}T${h}:${mi}`;
 }
 
@@ -47,8 +51,8 @@ export function RecordForm({ onSaved, editRecord, onCancel }: RecordFormProps) {
     if (editRecord) {
       setMode(2);
       setCategoryId(editRecord.category_id);
-      setStartTime(toDatetimeLocal(editRecord.start_time));
-      setEndTime(toDatetimeLocal(editRecord.end_time));
+      setStartTime(toDatetimeLocal(editRecord.start_time, true));
+      setEndTime(toDatetimeLocal(editRecord.end_time, true));
       setDurationHours("");
       setDurationMinutes("");
     } else {
@@ -249,6 +253,7 @@ export function RecordForm({ onSaved, editRecord, onCancel }: RecordFormProps) {
             </div>
             <input
               type="datetime-local"
+              step="1"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               className="w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 transition"
@@ -271,6 +276,7 @@ export function RecordForm({ onSaved, editRecord, onCancel }: RecordFormProps) {
             </div>
             <input
               type="datetime-local"
+              step="1"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
               className="w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 transition"
