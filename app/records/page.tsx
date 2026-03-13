@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -78,6 +78,7 @@ export default function RecordsPage() {
   const [offset, setOffset] = useState(0);
   const [durationMode, setDurationMode] = useState<DurationMode>("h");
   const [editingRecord, setEditingRecord] = useState<RecordWithCategory | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -125,11 +126,13 @@ export default function RecordsPage() {
       <main className="flex-1 overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
         <Header title="記録" />
         <div className="px-4 lg:px-8 py-6 space-y-6 max-w-4xl">
-          <RecordForm
-            onSaved={fetchRecords}
-            editRecord={editingRecord}
-            onCancel={() => setEditingRecord(null)}
-          />
+          <div ref={formRef}>
+            <RecordForm
+              onSaved={fetchRecords}
+              editRecord={editingRecord}
+              onCancel={() => setEditingRecord(null)}
+            />
+          </div>
 
           {/* Records List */}
           <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl overflow-hidden">
@@ -209,10 +212,10 @@ export default function RecordsPage() {
                   return (
                     <div
                       key={r.id}
-                      onDoubleClick={() => { setEditingRecord(r); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      onDoubleClick={() => { setEditingRecord(r); setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }}
                       className={cn(
                         "flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer",
-                        editingRecord?.id === r.id && "bg-violet-50 dark:bg-violet-500/10"
+                        editingRecord?.id === r.id && "bg-red-50 dark:bg-red-500/10"
                       )}
                     >
                       <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color ?? "#888" }} />
@@ -225,6 +228,11 @@ export default function RecordsPage() {
                         </div>
                       </div>
                       <span className="text-sm font-mono text-gray-600 dark:text-white/70">{formatDuration(ms, durationMode)}</span>
+                      {editingRecord?.id === r.id && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400 flex-shrink-0">
+                          編集中
+                        </span>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
                         className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 text-gray-400 dark:text-white/30 hover:text-red-500 transition"

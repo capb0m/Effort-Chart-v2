@@ -16,6 +16,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+
+    // 重複チェック（自分自身を除く）
+    const { data: existing } = await supabase
+      .from("records")
+      .select("id")
+      .eq("user_id", user.id)
+      .neq("id", id)
+      .lt("start_time", body.end_time)
+      .gt("end_time", body.start_time)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return NextResponse.json({ error: "同じ時間帯に既存の記録があります" }, { status: 400 });
+    }
   }
 
   const { data, error: dbError } = await supabase

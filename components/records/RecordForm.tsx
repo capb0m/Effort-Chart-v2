@@ -163,16 +163,24 @@ export function RecordForm({ onSaved, editRecord, onCancel }: RecordFormProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6">
+    <div className={cn(
+      "border rounded-2xl p-6 transition-colors",
+      isEditing
+        ? "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-500/40"
+        : "bg-white dark:bg-[#1e1e2e]/50 border-gray-200 dark:border-white/[0.06]"
+    )}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider">
+        <h2 className={cn(
+          "text-sm font-medium uppercase tracking-wider",
+          isEditing ? "text-red-500 dark:text-red-400" : "text-gray-500 dark:text-white/50"
+        )}>
           {isEditing ? "記録を編集" : "記録を追加"}
         </h2>
         {isEditing && onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="text-xs text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 transition"
+            className="text-xs text-red-400 dark:text-red-500/70 hover:text-red-600 dark:hover:text-red-400 transition"
           >
             キャンセル
           </button>
