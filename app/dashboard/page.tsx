@@ -19,6 +19,62 @@ import { ExternalLink, Flame, Keyboard, Trophy, RefreshCw } from "lucide-react";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils/cn";
 
+// ---- 累計時間 ----
+interface CumulativeEntry {
+  categoryId: string;
+  categoryName: string;
+  color: string;
+  totalHours: number;
+}
+
+interface CumulativeCache {
+  totals: CumulativeEntry[];
+  cachedAt: string; // YYYY-MM-DD
+}
+
+function formatCumulativeHours(h: number): string {
+  if (h < 10) return h.toFixed(1);
+  return Math.round(h).toString();
+}
+
+function useCumulativeTotals() {
+  const { session, user } = useAuth();
+  const [data, setData] = useState<CumulativeCache | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session?.access_token || !user) return;
+
+    const today = new Date().toLocaleDateString("sv");
+    const cacheKey = `effort_cumulative_${user.id}_${today}`;
+
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        setData(JSON.parse(raw) as CumulativeCache);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // ignore parse errors
+    }
+
+    fetch("/api/stats/cumulative", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then((r) => r.json())
+      .then((res: { totals: CumulativeEntry[] }) => {
+        const cache: CumulativeCache = { totals: res.totals, cachedAt: today };
+        try { localStorage.setItem(cacheKey, JSON.stringify(cache)); } catch { /* ignore */ }
+        setData(cache);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [session?.access_token, user?.id]);
+
+  return { data, loading };
+}
+
 // デイリー目標の進捗を取得するフック
 // ローカルタイムゾーンの今日の日付を返す (YYYY-MM-DD)
 function getLocalToday() {
@@ -82,6 +138,8 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const progress = useTodayProgress();
   const shownRef = useRef<Set<string>>(new Set());
+  const { data: cumulativeData, loading: cumulativeLoading } = useCumulativeTotals();
+  const [activeTabIdx, setActiveTabIdx] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -189,6 +247,104 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Cumulative Totals */}
+          {(cumulativeLoading || (cumulativeData && cumulativeData.totals.length > 0)) && (
+            <div className="bg-white dark:bg-[#1e1e2e]/50 border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-medium text-gray-500 dark:text-white/50 uppercase tracking-wider">
+                  累計時間
+                </h2>
+                {cumulativeData && (
+                  <span className="text-xs text-gray-400 dark:text-white/30">
+                    {cumulativeData.cachedAt} 時点
+                  </span>
+                )}
+              </div>
+
+              {cumulativeLoading ? (
+                <div className="space-y-3">
+                  <div className="h-8 bg-gray-100 dark:bg-white/[0.04] rounded-lg animate-pulse w-48" />
+                  <div className="h-16 bg-gray-100 dark:bg-white/[0.04] rounded-xl animate-pulse" />
+                </div>
+              ) : cumulativeData && cumulativeData.totals.length > 0 ? (() => {
+                const totals = cumulativeData.totals;
+                const safeIdx = Math.min(activeTabIdx, totals.length - 1);
+                const selected = totals[safeIdx];
+                const maxHours = totals[0]?.totalHours ?? 1;
+                return (
+                  <>
+                    {/* Scrollable category tabs */}
+                    <div className="flex gap-1 overflow-x-auto pb-1 mb-5 scrollbar-hide">
+                      {totals.map((t, i) => (
+                        <button
+                          key={t.categoryId}
+                          onClick={() => setActiveTabIdx(i)}
+                          className={cn(
+                            "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap",
+                            safeIdx === i
+                              ? "bg-gray-100 dark:bg-white/[0.08] text-gray-900 dark:text-white shadow-sm"
+                              : "text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/60"
+                          )}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: t.color }}
+                          />
+                          {t.categoryName}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Selected category detail */}
+                    <div className="flex items-end gap-3 mb-5">
+                      <span
+                        className="text-5xl font-bold font-mono leading-none"
+                        style={{ color: selected.color }}
+                      >
+                        {formatCumulativeHours(selected.totalHours)}
+                      </span>
+                      <span className="text-xl text-gray-400 dark:text-white/30 mb-0.5">h</span>
+                      <span className="text-sm text-gray-400 dark:text-white/30 mb-1 ml-1">
+                        累計
+                      </span>
+                    </div>
+
+                    {/* All categories bar chart */}
+                    <div className="space-y-2">
+                      {totals.map((t, i) => (
+                        <button
+                          key={t.categoryId}
+                          onClick={() => setActiveTabIdx(i)}
+                          className={cn(
+                            "w-full text-left group",
+                            safeIdx === i && "opacity-100",
+                            safeIdx !== i && "opacity-60 hover:opacity-80"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs text-gray-500 dark:text-white/40">{t.categoryName}</span>
+                            <span className="text-xs font-mono text-gray-600 dark:text-white/50">
+                              {formatCumulativeHours(t.totalHours)}h
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${maxHours > 0 ? (t.totalHours / maxHours) * 100 : 0}%`,
+                                backgroundColor: t.color,
+                              }}
+                            />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                );
+              })() : null}
             </div>
           )}
 
