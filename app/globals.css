@@ -35,6 +35,16 @@ body {
   color: var(--foreground);
 }
 
+/* ネイティブselect/optionのテキスト・背景を明示指定 */
+select {
+  color: var(--foreground);
+}
+
+option {
+  background-color: var(--surface);
+  color: var(--foreground);
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }

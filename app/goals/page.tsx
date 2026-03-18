@@ -123,7 +123,7 @@ export default function GoalsPage() {
                 </div>
                 {/* Category */}
                 <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 transition">
+                  className="w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500 transition">
                   <option value="overall">全カテゴリー合計</option>
                   {activeCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
