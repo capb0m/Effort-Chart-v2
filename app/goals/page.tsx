@@ -216,7 +216,7 @@ export default function GoalsPage() {
             <div className="px-6 py-4">
               {history ? (
                 <div className="space-y-2">
-                  {(historyView === "daily" ? history.daily.slice(-14) : historyView === "weekly" ? history.weekly : history.monthly).map((item, i) => {
+                  {(historyView === "daily" ? history.daily.slice(-14).reverse() : historyView === "weekly" ? [...history.weekly].reverse() : [...history.monthly].reverse()).map((item, i) => {
                     const label = "date" in item ? item.date : "week" in item ? item.week : item.month;
                     const rate = item.rate;
                     return (

@@ -105,6 +105,12 @@ export function StackedAreaChart({ mode, start, end, windowSize = 90 }: StackedA
           },
           tooltip: {
             callbacks: {
+              afterTitle: (items: any[]) => {
+                const total = items
+                  .filter((item) => item.dataset.yAxisID !== "y1")
+                  .reduce((sum, item) => sum + (item.parsed.y || 0), 0);
+                return `合計: ${total.toFixed(1)}h`;
+              },
               label: (ctx: any) => {
                 if (ctx.dataset.yAxisID === "y1") {
                   return ` キータイプ数: ${Math.round(ctx.parsed.y).toLocaleString()}`;
